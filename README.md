@@ -13,8 +13,11 @@ Then, start the container by using docker compose.
 
 ```bash 
 docker compose run ns3dce
+
+OR alternatively (this removes warnings that docker compose has leftover from older runs)
+docker compose run --rm --remove-orphans ns3dce
 ```
-Now, we are ready to run ns3 terminal commands using waf. Make sure to configure at least once. 
+Now, we are ready to run ns3 terminal commands using waf. Make sure to configure at least once. Building might take a bit of time. 
 
 ```bash 
 ./waf configure --enable-examples --enable-tests

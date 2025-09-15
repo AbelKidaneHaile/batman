@@ -40,15 +40,13 @@ BatmanPacket::GetInstanceTypeId() const
   return GetTypeId();
 }
 
-uint32_t
-BatmanPacket::GetSerializedSize() const
+uint32_t BatmanPacket::GetSerializedSize() const
 {
   // 2 IPv4 addresses (4 bytes each) + TQ + SeqNum + TTL + Flags + Version + Reserved
   return 4 + 4 + 1 + 2 + 1 + 1 + 1 + 1; // 15 bytes total
 }
 
-void
-BatmanPacket::Serialize(Buffer::Iterator start) const
+void BatmanPacket::Serialize(Buffer::Iterator start) const
 {
   NS_LOG_FUNCTION(this << &start);
   
@@ -69,8 +67,7 @@ BatmanPacket::Serialize(Buffer::Iterator start) const
                << " Flags=" << (int)m_flags);
 }
 
-uint32_t
-BatmanPacket::Deserialize(Buffer::Iterator start)
+uint32_t BatmanPacket::Deserialize(Buffer::Iterator start)
 {
   NS_LOG_FUNCTION(this << &start);
   
@@ -93,8 +90,7 @@ BatmanPacket::Deserialize(Buffer::Iterator start)
   return GetSerializedSize();
 }
 
-void
-BatmanPacket::Print(std::ostream &os) const
+void BatmanPacket::Print(std::ostream &os) const
 {
   os << "Batman Packet: "
      << "Orig=" << m_originator

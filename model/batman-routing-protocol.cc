@@ -20,8 +20,7 @@ NS_OBJECT_ENSURE_REGISTERED(BatmanRoutingProtocol);
 
 const uint32_t BATMAN_PORT = 4305;
 
-TypeId
-BatmanRoutingProtocol::GetTypeId()
+TypeId BatmanRoutingProtocol::GetTypeId()
 {
   static TypeId tid = TypeId("ns3::BatmanRoutingProtocol")
     .SetParent<Ipv4RoutingProtocol>()
@@ -84,8 +83,7 @@ BatmanRoutingProtocol::~BatmanRoutingProtocol()
   NS_LOG_FUNCTION(this);
 }
 
-void
-BatmanRoutingProtocol::DoDispose()
+void BatmanRoutingProtocol::DoDispose()
 {
   NS_LOG_FUNCTION(this);
   
@@ -107,8 +105,7 @@ BatmanRoutingProtocol::DoDispose()
   Ipv4RoutingProtocol::DoDispose();
 }
 
-void
-BatmanRoutingProtocol::SetIpv4(Ptr<Ipv4> ipv4)
+void BatmanRoutingProtocol::SetIpv4(Ptr<Ipv4> ipv4)
 {
   NS_LOG_FUNCTION(this << ipv4);
   NS_ASSERT(ipv4 != 0);
@@ -123,8 +120,7 @@ BatmanRoutingProtocol::SetIpv4(Ptr<Ipv4> ipv4)
   Simulator::ScheduleNow(&BatmanRoutingProtocol::Start, this);
 }
 
-void
-BatmanRoutingProtocol::Start()
+void BatmanRoutingProtocol::Start()
 {
   NS_LOG_FUNCTION(this);
   
@@ -159,15 +155,13 @@ BatmanRoutingProtocol::Start()
   NS_LOG_INFO("Batman protocol started");
 }
 
-void
-BatmanRoutingProtocol::HelloTimerExpire()
+void BatmanRoutingProtocol::HelloTimerExpire()
 {
   SendBatmanPacket();
   m_helloTimer.Schedule(m_helloInterval);
 }
 
-void
-BatmanRoutingProtocol::SendBatmanPacket()
+void BatmanRoutingProtocol::SendBatmanPacket()
 {
   NS_LOG_FUNCTION(this);
   
@@ -198,8 +192,7 @@ BatmanRoutingProtocol::SendBatmanPacket()
   }
 }
 
-void
-BatmanRoutingProtocol::RecvBatman(Ptr<Socket> socket)
+void BatmanRoutingProtocol::RecvBatman(Ptr<Socket> socket)
 {
   NS_LOG_FUNCTION(this << socket);
   
@@ -317,8 +310,7 @@ BatmanRoutingProtocol::RecvBatman(Ptr<Socket> socket)
   }
 }
 
-void
-BatmanRoutingProtocol::ForwardBatmanPacket(const BatmanPacket& receivedPacket, uint32_t incomingInterface)
+void BatmanRoutingProtocol::ForwardBatmanPacket(const BatmanPacket& receivedPacket, uint32_t incomingInterface)
 {
   NS_LOG_FUNCTION(this);
   
@@ -348,8 +340,7 @@ BatmanRoutingProtocol::ForwardBatmanPacket(const BatmanPacket& receivedPacket, u
   }
 }
 
-bool
-BatmanRoutingProtocol::IsMyOwnBroadcast(const BatmanPacket& packet)
+bool BatmanRoutingProtocol::IsMyOwnBroadcast(const BatmanPacket& packet)
 {
   for (uint32_t i = 0; i < m_ipv4->GetNInterfaces(); i++) {
     if (m_ipv4->GetAddress(i, 0).GetLocal() == packet.GetOriginator()) {
@@ -359,8 +350,7 @@ BatmanRoutingProtocol::IsMyOwnBroadcast(const BatmanPacket& packet)
   return false;
 }
 
-uint8_t
-BatmanRoutingProtocol::CalculateTQ(Ipv4Address neighbor, uint8_t receivedTQ)
+uint8_t BatmanRoutingProtocol::CalculateTQ(Ipv4Address neighbor, uint8_t receivedTQ)
 {
   if (receivedTQ < m_hopPenalty) {
     return 0;
@@ -381,8 +371,7 @@ BatmanRoutingProtocol::CalculateTQ(Ipv4Address neighbor, uint8_t receivedTQ)
   return penalizedTQ;
 }
 
-void
-BatmanRoutingProtocol::UpdateSlidingWindow(Ipv4Address neighbor, uint16_t seqNum)
+void BatmanRoutingProtocol::UpdateSlidingWindow(Ipv4Address neighbor, uint16_t seqNum)
 {
   auto windowIt = m_slidingWindows.find(neighbor);
   if (windowIt == m_slidingWindows.end()) {
@@ -403,8 +392,7 @@ BatmanRoutingProtocol::UpdateSlidingWindow(Ipv4Address neighbor, uint16_t seqNum
   window.currentIndex = (window.currentIndex + 1) % window.windowSize;
 }
 
-uint8_t
-BatmanRoutingProtocol::GetSlidingWindowTQ(Ipv4Address neighbor)
+uint8_t BatmanRoutingProtocol::GetSlidingWindowTQ(Ipv4Address neighbor)
 {
   auto windowIt = m_slidingWindows.find(neighbor);
   if (windowIt == m_slidingWindows.end()) {
@@ -421,8 +409,7 @@ BatmanRoutingProtocol::GetSlidingWindowTQ(Ipv4Address neighbor)
   return static_cast<uint8_t>(std::min(tq, static_cast<uint32_t>(255)));
 }
 
-bool
-BatmanRoutingProtocol::IsBidirectionalNeighbor(Ipv4Address neighbor)
+bool BatmanRoutingProtocol::IsBidirectionalNeighbor(Ipv4Address neighbor)
 {
   // Simple bidirectional check - in real implementation would
   // check if neighbor announces us in its originator messages
@@ -438,15 +425,13 @@ BatmanRoutingProtocol::IsBidirectionalNeighbor(Ipv4Address neighbor)
          (neighborIt->second.tq > 50); // Threshold for good link quality
 }
 
-bool
-BatmanRoutingProtocol::IsNewerSequence(uint16_t newSeq, uint16_t oldSeq)
+bool BatmanRoutingProtocol::IsNewerSequence(uint16_t newSeq, uint16_t oldSeq)
 {
   // Handle sequence number wraparound
   return (int16_t)(newSeq - oldSeq) > 0;
 }
 
-void
-BatmanRoutingProtocol::UpdateRoute(Ipv4Address dest, Ipv4Address nextHop, uint32_t interface, uint8_t hopCount)
+void BatmanRoutingProtocol::UpdateRoute(Ipv4Address dest, Ipv4Address nextHop, uint32_t interface, uint8_t hopCount)
 {
   NS_LOG_FUNCTION(this << dest << nextHop << interface << (int)hopCount);
   
@@ -465,23 +450,20 @@ BatmanRoutingProtocol::UpdateRoute(Ipv4Address dest, Ipv4Address nextHop, uint32
                << " interface " << interface << " hops " << (int)hopCount);
 }
 
-void
-BatmanRoutingProtocol::RemoveRoute(Ipv4Address dest)
+void BatmanRoutingProtocol::RemoveRoute(Ipv4Address dest)
 {
   // In a real implementation, you would properly remove the route
   // from the routing table. This is simplified for demonstration.
   NS_LOG_DEBUG("Removing route to " << dest);
 }
 
-void
-BatmanRoutingProtocol::PurgeTimerExpire()
+void BatmanRoutingProtocol::PurgeTimerExpire()
 {
   PurgeNeighbors();
   m_purgeTimer.Schedule(m_purgeTimeout);
 }
 
-void
-BatmanRoutingProtocol::PurgeNeighbors()
+void BatmanRoutingProtocol::PurgeNeighbors()
 {
   NS_LOG_FUNCTION(this);
   
@@ -516,8 +498,7 @@ BatmanRoutingProtocol::PurgeNeighbors()
   }
 }
 
-Ptr<Ipv4Route>
-BatmanRoutingProtocol::RouteOutput(Ptr<Packet> p, const Ipv4Header &header,
+Ptr<Ipv4Route> BatmanRoutingProtocol::RouteOutput(Ptr<Packet> p, const Ipv4Header &header,
                                  Ptr<NetDevice> oif, Socket::SocketErrno &sockerr)
 {
   NS_LOG_FUNCTION(this << header << oif);
@@ -557,8 +538,7 @@ BatmanRoutingProtocol::RouteOutput(Ptr<Packet> p, const Ipv4Header &header,
   return 0;
 }
 
-bool
-BatmanRoutingProtocol::RouteInput(Ptr<const Packet> p, const Ipv4Header &header,
+bool BatmanRoutingProtocol::RouteInput(Ptr<const Packet> p, const Ipv4Header &header,
                                 Ptr<const NetDevice> idev, UnicastForwardCallback ucb,
                                 MulticastForwardCallback mcb, LocalDeliverCallback lcb,
                                 ErrorCallback ecb)
@@ -637,8 +617,7 @@ BatmanRoutingProtocol::RouteInput(Ptr<const Packet> p, const Ipv4Header &header,
   return false;
 }
 
-void
-BatmanRoutingProtocol::NotifyInterfaceUp(uint32_t interface)
+void BatmanRoutingProtocol::NotifyInterfaceUp(uint32_t interface)
 {
   NS_LOG_FUNCTION(this << interface);
   
@@ -662,8 +641,7 @@ BatmanRoutingProtocol::NotifyInterfaceUp(uint32_t interface)
   }
 }
 
-void
-BatmanRoutingProtocol::NotifyInterfaceDown(uint32_t interface)
+void BatmanRoutingProtocol::NotifyInterfaceDown(uint32_t interface)
 {
   NS_LOG_FUNCTION(this << interface);
   
@@ -697,22 +675,19 @@ BatmanRoutingProtocol::NotifyInterfaceDown(uint32_t interface)
   }
 }
 
-void
-BatmanRoutingProtocol::NotifyAddAddress(uint32_t interface, Ipv4InterfaceAddress address)
+void BatmanRoutingProtocol::NotifyAddAddress(uint32_t interface, Ipv4InterfaceAddress address)
 {
   NS_LOG_FUNCTION(this << interface << address);
   // Address changes might require socket recreation, but we'll keep it simple
 }
 
-void
-BatmanRoutingProtocol::NotifyRemoveAddress(uint32_t interface, Ipv4InterfaceAddress address)
+void BatmanRoutingProtocol::NotifyRemoveAddress(uint32_t interface, Ipv4InterfaceAddress address)
 {
   NS_LOG_FUNCTION(this << interface << address);
   // Address changes might require socket recreation, but we'll keep it simple
 }
 
-void
-BatmanRoutingProtocol::PrintRoutingTable(Ptr<OutputStreamWrapper> stream, Time::Unit unit) const
+void BatmanRoutingProtocol::PrintRoutingTable(Ptr<OutputStreamWrapper> stream, Time::Unit unit) const
 {
   NS_LOG_FUNCTION(this << stream);
   
@@ -744,8 +719,7 @@ BatmanRoutingProtocol::PrintRoutingTable(Ptr<OutputStreamWrapper> stream, Time::
   *stream->GetStream() << "\n";
 }
 
-uint32_t
-BatmanRoutingProtocol::GetInterfaceForSocket(Ptr<Socket> socket) const
+uint32_t BatmanRoutingProtocol::GetInterfaceForSocket(Ptr<Socket> socket) const
 {
   for (const auto& pair : m_socketAddresses) {
     if (pair.second == socket) {
@@ -755,14 +729,12 @@ BatmanRoutingProtocol::GetInterfaceForSocket(Ptr<Socket> socket) const
   return std::numeric_limits<uint32_t>::max();
 }
 
-bool
-BatmanRoutingProtocol::IsInterfaceExcluded(uint32_t interface) const
+bool BatmanRoutingProtocol::IsInterfaceExcluded(uint32_t interface) const
 {
   return m_interfaceExclusions.find(interface) != m_interfaceExclusions.end();
 }
 
-Ptr<Socket>
-BatmanRoutingProtocol::FindSocketWithInterfaceAddress(Ipv4InterfaceAddress addr) const
+Ptr<Socket> BatmanRoutingProtocol::FindSocketWithInterfaceAddress(Ipv4InterfaceAddress addr) const
 {
   for (const auto& pair : m_socketAddresses) {
     if (m_ipv4->GetAddress(pair.first, 0) == addr) {
@@ -772,8 +744,7 @@ BatmanRoutingProtocol::FindSocketWithInterfaceAddress(Ipv4InterfaceAddress addr)
   return 0;
 }
 
-int64_t
-BatmanRoutingProtocol::AssignStreams(int64_t stream)
+int64_t BatmanRoutingProtocol::AssignStreams(int64_t stream)
 {
   NS_LOG_FUNCTION(this << stream);
   m_uniformRandomVariable->SetStream(stream);
