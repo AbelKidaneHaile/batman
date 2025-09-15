@@ -1,0 +1,29 @@
+# B.A.T.M.A.N 
+Simple simulation code for simulating the batman protocol in ns-3. 
+
+## How to use
+Clone this repo and pull the image for the project from Docker Hub.
+
+```bash 
+git clone https://github.com/AbelKidaneHaile/batman.git 
+docker pull abelkidane/ns3-dce 
+cd batman
+```
+Then, start the container by using docker compose.
+
+```bash 
+docker compose run ns3dce
+```
+Now, we are ready to run ns3 terminal commands using waf. Make sure to configure at least once. 
+
+```bash 
+./waf configure --enable-examples --enable-tests
+./waf build
+```
+Finally, we can run the simulation
+
+```bash 
+./waf --run batman-simulation
+./waf --run "batman-simulation --nNodes=15 --duration=200"
+./test.py -s batman
+```
