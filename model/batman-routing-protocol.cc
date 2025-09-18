@@ -130,7 +130,23 @@ BatmanRoutingProtocol::Start()
 {
   NS_LOG_FUNCTION(this);
   
-  // Create sockets for all interfaces except excluded ones
+  // Create a single socket for all interfaces to avoid binding conflicts
+  Ptr<Socket> socket = Socket::CreateSocket(GetObject<Node>(),
+                                          UdpSocketFactory::GetTypeId());
+  
+  // Bind to any address on the Batman port
+  InetSocketAddress local = InetSocketAddress(Ipv4Address::GetAny(), BATMAN_PORT);
+  
+  if (socket->Bind(local) == -1) {
+    NS_LOG_ERROR("Failed to bind Batman socket");
+    return;
+  }
+  
+  socket->SetAllowBroadcast(true);
+  socket->SetAttribute("IpTtl", UintegerValue(1));
+  socket->SetRecvCallback(MakeCallback(&BatmanRoutingProtocol::RecvBatman, this));
+  
+  // Store the socket reference for all valid interfaces
   for (uint32_t i = 0; i < m_ipv4->GetNInterfaces(); i++) {
     if (m_ipv4->GetAddress(i, 0).GetLocal() == Ipv4Address::GetLoopback()) {
       continue;
@@ -141,28 +157,14 @@ BatmanRoutingProtocol::Start()
       continue;
     }
     
-    // Check if we have a valid address on this interface
     Ipv4InterfaceAddress ifaceAddr = m_ipv4->GetAddress(i, 0);
     if (ifaceAddr.GetLocal() == Ipv4Address("0.0.0.0")) {
       NS_LOG_WARN("Interface " << i << " has no valid IP address, skipping");
       continue;
     }
     
-    Ptr<Socket> socket = Socket::CreateSocket(GetObject<Node>(),
-                                            UdpSocketFactory::GetTypeId());
-    InetSocketAddress local = InetSocketAddress(Ipv4Address::GetAny(), BATMAN_PORT);
-    
-    if (socket->Bind(local) == -1) {
-      NS_LOG_ERROR("Failed to bind Batman socket on interface " << i);
-      continue;
-    }
-    
-    socket->BindToNetDevice(m_ipv4->GetNetDevice(i));
-    socket->SetAllowBroadcast(true);
-    socket->SetRecvCallback(MakeCallback(&BatmanRoutingProtocol::RecvBatman, this));
     m_socketAddresses[i] = socket;
-    
-    NS_LOG_INFO("Batman socket created for interface " << i 
+    NS_LOG_INFO("Batman socket assigned to interface " << i 
                 << " with address " << ifaceAddr.GetLocal());
   }
   
@@ -171,7 +173,7 @@ BatmanRoutingProtocol::Start()
   m_helloTimer.Schedule(jitter);
   m_purgeTimer.Schedule(m_purgeTimeout);
   
-  NS_LOG_INFO("Batman protocol started");
+  NS_LOG_INFO("Batman protocol started with shared socket");
 }
 
 void
@@ -186,33 +188,75 @@ BatmanRoutingProtocol::SendBatmanPacket()
 {
   NS_LOG_FUNCTION(this);
   
-  for (std::map<uint32_t, Ptr<Socket>>::const_iterator iter = m_socketAddresses.begin();
-       iter != m_socketAddresses.end(); ++iter) {
-    
-    uint32_t interface = iter->first;
-    Ptr<Socket> socket = iter->second;
-    
-    Ipv4InterfaceAddress iface = m_ipv4->GetAddress(interface, 0);
-    
-    BatmanPacket batmanPacket;
-    batmanPacket.SetOriginator(iface.GetLocal());
-    batmanPacket.SetPrevSender(iface.GetLocal());
-    batmanPacket.SetTQ(255); // Maximum quality for own packets
-    batmanPacket.SetSeqNum(++m_seqNum);
-    batmanPacket.SetTTL(m_maxTTL);
-    
-    // Note: Bidirectional neighbor announcement will be added when BatmanPacket
-    // class is extended with SetBidirectionalNeighbors() method
-    
-    Ptr<Packet> packet = Create<Packet>();
-    packet->AddHeader(batmanPacket);
-    
-    InetSocketAddress destination = InetSocketAddress(iface.GetBroadcast(), BATMAN_PORT);
-    socket->SendTo(packet, 0, destination);
-    
-    NS_LOG_DEBUG("Sent Batman packet: Orig=" << iface.GetLocal() 
-                 << " SeqNum=" << batmanPacket.GetSeqNum() 
-                 << " Interface=" << interface);
+  // Get the first valid interface and socket
+  if (m_socketAddresses.empty()) {
+    NS_LOG_ERROR("No sockets available for sending Batman packets");
+    return;
+  }
+  
+  auto iter = m_socketAddresses.begin();
+  uint32_t interface = iter->first;
+  Ptr<Socket> socket = iter->second;
+  
+  Ipv4InterfaceAddress iface = m_ipv4->GetAddress(interface, 0);
+  
+  BatmanPacket batmanPacket;
+  batmanPacket.SetOriginator(iface.GetLocal());
+  batmanPacket.SetPrevSender(iface.GetLocal());
+  batmanPacket.SetTQ(255); // Maximum quality for own packets
+  batmanPacket.SetSeqNum(++m_seqNum);
+  batmanPacket.SetTTL(m_maxTTL);
+  
+  // Add bidirectional neighbors to the packet
+  std::set<Ipv4Address> bidirectionalNeighbors;
+  for (const auto& neighbor : m_neighbors) {
+    if (neighbor.second.isBidirectional) {
+      bidirectionalNeighbors.insert(neighbor.first);
+    }
+  }
+  batmanPacket.SetBidirectionalNeighbors(bidirectionalNeighbors);
+  
+  Ptr<Packet> packet = Create<Packet>();
+  packet->AddHeader(batmanPacket);
+  
+  // Create raw socket destination - this bypasses routing
+  Address destination;
+  
+  // Try different broadcast approaches
+  bool sent = false;
+  
+  // Method 1: Try subnet broadcast
+  try {
+    InetSocketAddress dest1(iface.GetBroadcast(), BATMAN_PORT);
+    int result1 = socket->SendTo(packet, 0, dest1);
+    if (result1 != -1) {
+      sent = true;
+      NS_LOG_DEBUG("Sent Batman packet via subnet broadcast: Orig=" << iface.GetLocal() 
+                   << " SeqNum=" << batmanPacket.GetSeqNum() 
+                   << " Interface=" << interface
+                   << " BidirNeighbors=" << bidirectionalNeighbors.size());
+    }
+  } catch (...) {
+    // Continue to next method
+  }
+  
+  // Method 2: Try limited broadcast if subnet failed
+  if (!sent) {
+    try {
+      InetSocketAddress dest2(Ipv4Address("255.255.255.255"), BATMAN_PORT);
+      int result2 = socket->SendTo(packet, 0, dest2);
+      if (result2 != -1) {
+        sent = true;
+        NS_LOG_DEBUG("Sent Batman packet via limited broadcast: Orig=" << iface.GetLocal() 
+                     << " SeqNum=" << batmanPacket.GetSeqNum());
+      }
+    } catch (...) {
+      // Continue to next method  
+    }
+  }
+  
+  if (!sent) {
+    NS_LOG_WARN("Failed to send Batman packet on interface " << interface);
   }
 }
 
@@ -228,6 +272,9 @@ void BatmanRoutingProtocol::RecvBatman(Ptr<Socket> socket)
     NS_LOG_WARN("RecvBatman: empty packet received");
     return;
   }
+  
+  NS_LOG_DEBUG("RecvBatman: packet size=" << receivedPacket->GetSize());
+  
   InetSocketAddress inetSourceAddr = InetSocketAddress::ConvertFrom(sourceAddress);
   Ipv4Address sender = inetSourceAddr.GetIpv4();
   
@@ -238,7 +285,8 @@ void BatmanRoutingProtocol::RecvBatman(Ptr<Socket> socket)
                << " Orig=" << batmanPacket.GetOriginator()
                << " SeqNum=" << batmanPacket.GetSeqNum()
                << " TQ=" << (int)batmanPacket.GetTQ()
-               << " TTL=" << (int)batmanPacket.GetTTL());
+               << " TTL=" << (int)batmanPacket.GetTTL()
+               << " BidirNeighbors=" << batmanPacket.GetNumBidirectionalNeighbors());
   
   // Ignore our own broadcasts
   if (IsMyOwnBroadcast(batmanPacket)) {
@@ -263,12 +311,10 @@ void BatmanRoutingProtocol::RecvBatman(Ptr<Socket> socket)
     neighbor.lastSeqNum = batmanPacket.GetSeqNum();
     neighbor.interface = incomingInterface;
     neighbor.tq = GetSlidingWindowTQ(sender);
-    
-    // Note: Bidirectional neighbors list will be populated when BatmanPacket
-    // class supports GetBidirectionalNeighbors() method
+    neighbor.bidirectionalNeighbors = batmanPacket.GetBidirectionalNeighbors();
     
     if (m_enableBidirectionalCheck) {
-      // Check for bidirectionality
+      // Check for bidirectionality by seeing if we're in their bidirectional list
       neighbor.isBidirectional = IsBidirectionalNeighbor(sender);
       neighbor.bidirectionalTimeout = Simulator::Now() + m_bidirectionalTimeout;
     } else {
@@ -416,15 +462,34 @@ BatmanRoutingProtocol::UpdateSlidingWindow(Ipv4Address neighbor, uint16_t seqNum
   
   SlidingWindow& window = windowIt->second;
   
-  // For now, assume consecutive packets (simplified)
-  // In real implementation, would handle sequence number gaps
+  // Handle sequence number properly with wraparound
+  static std::map<Ipv4Address, uint16_t> lastSeqNums;
+  
+  if (lastSeqNums.find(neighbor) != lastSeqNums.end()) {
+    uint16_t expectedSeq = lastSeqNums[neighbor] + 1;
+    int16_t seqDiff = static_cast<int16_t>(seqNum - expectedSeq);
+    
+    if (seqDiff > 0) {
+      // We missed some packets, mark them as lost
+      for (int16_t i = 0; i < seqDiff && i < static_cast<int16_t>(window.windowSize); i++) {
+        if (window.receivedPackets[window.currentIndex]) {
+          window.receivedCount--;
+        }
+        window.receivedPackets[window.currentIndex] = false;
+        window.currentIndex = (window.currentIndex + 1) % window.windowSize;
+      }
+    }
+  }
+  
+  // Mark current packet as received
   if (window.receivedPackets[window.currentIndex]) {
     window.receivedCount--;
   }
-  
   window.receivedPackets[window.currentIndex] = true;
   window.receivedCount++;
   window.currentIndex = (window.currentIndex + 1) % window.windowSize;
+  
+  lastSeqNums[neighbor] = seqNum;
 }
 
 uint8_t
@@ -453,13 +518,16 @@ BatmanRoutingProtocol::IsBidirectionalNeighbor(Ipv4Address neighbor)
     return false;
   }
   
-  // Simplified bidirectional check until BatmanPacket supports neighbor announcements
-  // In a complete implementation, check if neighbor announces us in its bidirectional list
+  // Check if neighbor announces us in its bidirectional list
+  for (uint32_t i = 0; i < m_ipv4->GetNInterfaces(); i++) {
+    Ipv4Address myAddr = m_ipv4->GetAddress(i, 0).GetLocal();
+    if (neighborIt->second.bidirectionalNeighbors.find(myAddr) != 
+        neighborIt->second.bidirectionalNeighbors.end()) {
+      return true;
+    }
+  }
   
-  // For now, use TQ-based check
-  Time now = Simulator::Now();
-  return (now - neighborIt->second.lastSeen < m_bidirectionalTimeout) && 
-         (neighborIt->second.tq > 50);
+  return false;
 }
 
 bool
@@ -557,6 +625,23 @@ BatmanRoutingProtocol::RouteOutput(Ptr<Packet> p, const Ipv4Header &header,
   NS_LOG_FUNCTION(this << header << oif);
   
   Ipv4Address destination = header.GetDestination();
+  
+  // Handle broadcast and multicast - return NULL to let system handle
+  if (destination.IsBroadcast() || destination.IsMulticast()) {
+    NS_LOG_DEBUG("Broadcast/Multicast packet " << destination << " - delegating to system");
+    sockerr = Socket::ERROR_NOTERROR;
+    return 0; // Return NULL route to delegate to system
+  }
+  
+  // Handle subnet broadcasts specifically
+  for (uint32_t i = 0; i < m_ipv4->GetNInterfaces(); i++) {
+    Ipv4InterfaceAddress ifaceAddr = m_ipv4->GetAddress(i, 0);
+    if (destination == ifaceAddr.GetBroadcast()) {
+      NS_LOG_DEBUG("Subnet broadcast " << destination << " - delegating to system");
+      sockerr = Socket::ERROR_NOTERROR;
+      return 0;
+    }
+  }
   
   // First check our route cache for fast lookup
   auto routeIt = m_routeCache.find(destination);
@@ -727,12 +812,26 @@ BatmanRoutingProtocol::NotifyInterfaceUp(uint32_t interface)
   
   // Create socket for new interface if not already exists
   if (m_socketAddresses.find(interface) == m_socketAddresses.end()) {
+    Ipv4InterfaceAddress ifaceAddr = m_ipv4->GetAddress(interface, 0);
+    if (ifaceAddr.GetLocal() == Ipv4Address("0.0.0.0")) {
+      NS_LOG_WARN("Interface " << interface << " has no valid IP address, skipping");
+      return;
+    }
+    
     Ptr<Socket> socket = Socket::CreateSocket(GetObject<Node>(),
                                             UdpSocketFactory::GetTypeId());
-    InetSocketAddress local = InetSocketAddress(Ipv4Address::GetAny(), BATMAN_PORT);
-    socket->Bind(local);
+    
+    // First bind to the network device, then to the address
     socket->BindToNetDevice(m_ipv4->GetNetDevice(interface));
+    
+    InetSocketAddress local = InetSocketAddress(ifaceAddr.GetLocal(), BATMAN_PORT);
+    if (socket->Bind(local) == -1) {
+      NS_LOG_ERROR("Failed to bind Batman socket on interface " << interface);
+      return;
+    }
+    
     socket->SetAllowBroadcast(true);
+    socket->SetAttribute("IpTtl", UintegerValue(1));
     socket->SetRecvCallback(MakeCallback(&BatmanRoutingProtocol::RecvBatman, this));
     m_socketAddresses[interface] = socket;
     
