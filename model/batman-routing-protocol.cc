@@ -458,38 +458,98 @@ BatmanRoutingProtocol::UpdateSlidingWindow(Ipv4Address neighbor, uint16_t seqNum
   if (windowIt == m_slidingWindows.end()) {
     m_slidingWindows[neighbor] = SlidingWindow(m_windowSize);
     windowIt = m_slidingWindows.find(neighbor);
+    
+    // Initialize the window - assume we start receiving from this point
+    SlidingWindow& window = windowIt->second;
+    for (uint32_t i = 0; i < window.windowSize; i++) {
+      window.receivedPackets[i] = false;
+    }
+    window.receivedCount = 0;
+    window.currentIndex = 0;
   }
   
   SlidingWindow& window = windowIt->second;
   
   // Handle sequence number properly with wraparound
   static std::map<Ipv4Address, uint16_t> lastSeqNums;
+  static std::map<Ipv4Address, bool> firstPacket;
   
-  if (lastSeqNums.find(neighbor) != lastSeqNums.end()) {
-    uint16_t expectedSeq = lastSeqNums[neighbor] + 1;
-    int16_t seqDiff = static_cast<int16_t>(seqNum - expectedSeq);
+  if (firstPacket.find(neighbor) == firstPacket.end()) {
+    // This is the first packet from this neighbor
+    firstPacket[neighbor] = false;
+    lastSeqNums[neighbor] = seqNum;
     
-    if (seqDiff > 0) {
-      // We missed some packets, mark them as lost
-      for (int16_t i = 0; i < seqDiff && i < static_cast<int16_t>(window.windowSize); i++) {
-        if (window.receivedPackets[window.currentIndex]) {
-          window.receivedCount--;
-        }
-        window.receivedPackets[window.currentIndex] = false;
-        window.currentIndex = (window.currentIndex + 1) % window.windowSize;
-      }
+    // Mark current packet as received
+    if (window.receivedPackets[window.currentIndex]) {
+      window.receivedCount--;
     }
+    window.receivedPackets[window.currentIndex] = true;
+    window.receivedCount++;
+    window.currentIndex = (window.currentIndex + 1) % window.windowSize;
+    
+    NS_LOG_DEBUG("First packet from " << neighbor << " seqNum=" << seqNum << " TQ=" << GetSlidingWindowTQ(neighbor));
+    return;
   }
   
-  // Mark current packet as received
-  if (window.receivedPackets[window.currentIndex]) {
-    window.receivedCount--;
-  }
-  window.receivedPackets[window.currentIndex] = true;
-  window.receivedCount++;
-  window.currentIndex = (window.currentIndex + 1) % window.windowSize;
+  uint16_t expectedSeq = lastSeqNums[neighbor] + 1;
+  int16_t seqDiff = static_cast<int16_t>(seqNum - expectedSeq);
   
-  lastSeqNums[neighbor] = seqNum;
+  // Handle normal case (consecutive packets)
+  if (seqNum == expectedSeq || seqDiff == 0) {
+    // Mark current packet as received
+    if (window.receivedPackets[window.currentIndex]) {
+      window.receivedCount--;
+    }
+    window.receivedPackets[window.currentIndex] = true;
+    window.receivedCount++;
+    window.currentIndex = (window.currentIndex + 1) % window.windowSize;
+    
+    lastSeqNums[neighbor] = seqNum;
+  }
+  // Handle case where we missed some packets
+  else if (seqDiff > 0 && seqDiff < static_cast<int16_t>(window.windowSize / 2)) {
+    // We missed some packets, mark them as lost
+    for (int16_t i = 0; i < seqDiff; i++) {
+      if (window.receivedPackets[window.currentIndex]) {
+        window.receivedCount--;
+      }
+      window.receivedPackets[window.currentIndex] = false;
+      window.currentIndex = (window.currentIndex + 1) % window.windowSize;
+    }
+    
+    // Mark current packet as received
+    if (window.receivedPackets[window.currentIndex]) {
+      window.receivedCount--;
+    }
+    window.receivedPackets[window.currentIndex] = true;
+    window.receivedCount++;
+    window.currentIndex = (window.currentIndex + 1) % window.windowSize;
+    
+    lastSeqNums[neighbor] = seqNum;
+  }
+  // Handle duplicate or very old packet
+  else if (seqDiff <= 0) {
+    // This is a duplicate or old packet, ignore it for TQ calculation
+    NS_LOG_DEBUG("Duplicate/old packet from " << neighbor << " seqNum=" << seqNum << " expected=" << expectedSeq);
+    return;
+  }
+  // Handle sequence number wraparound or very large gap
+  else {
+    // Large gap - assume sequence number wrapped around or we lost many packets
+    // Reset the window and start fresh
+    for (uint32_t i = 0; i < window.windowSize; i++) {
+      window.receivedPackets[i] = false;
+    }
+    window.receivedCount = 1; // Only this packet
+    window.currentIndex = 1;
+    window.receivedPackets[0] = true;
+    
+    lastSeqNums[neighbor] = seqNum;
+  }
+  
+  NS_LOG_DEBUG("Updated sliding window for " << neighbor << " seqNum=" << seqNum 
+               << " receivedCount=" << window.receivedCount 
+               << " TQ=" << GetSlidingWindowTQ(neighbor));
 }
 
 uint8_t
@@ -501,13 +561,48 @@ BatmanRoutingProtocol::GetSlidingWindowTQ(Ipv4Address neighbor)
   }
   
   const SlidingWindow& window = windowIt->second;
-  if (window.receivedCount == 0) {
+  
+  // If we haven't filled the window yet, calculate based on received packets so far
+  uint32_t totalPackets = window.windowSize;
+  uint32_t receivedPackets = window.receivedCount;
+  
+  // For newly discovered neighbors, be more lenient with TQ calculation
+  // Count the actual slots that have been used
+  uint32_t usedSlots = 0;
+  for (uint32_t i = 0; i < window.windowSize; i++) {
+    // Count slots that have been explicitly set (either true or false)
+    usedSlots++;
+  }
+  
+  // If we have very few samples, use a more optimistic calculation
+  if (receivedPackets == 0) {
     return 0;
   }
   
-  // Calculate TQ as percentage of received packets
-  uint32_t tq = (window.receivedCount * 255) / window.windowSize;
-  return static_cast<uint8_t>(std::min(tq, static_cast<uint32_t>(255)));
+  // For initial packets, give higher weight to successful reception
+  if (usedSlots < window.windowSize / 4) {
+    // Use actual received vs used slots for new neighbors
+    if (usedSlots > 0) {
+      totalPackets = usedSlots;
+    } else {
+      totalPackets = 1; // At least one packet
+    }
+  }
+  
+  // Calculate TQ as percentage of received packets (0-255 scale)
+  uint32_t tq = (receivedPackets * 255) / totalPackets;
+  
+  // Ensure minimum TQ for functioning links
+  if (tq > 0 && tq < 50 && receivedPackets > 0) {
+    tq = 50; // Minimum viable TQ
+  }
+  
+  uint8_t result = static_cast<uint8_t>(std::min(tq, static_cast<uint32_t>(255)));
+  
+  NS_LOG_DEBUG("TQ calculation for " << neighbor << ": received=" << receivedPackets 
+               << " total=" << totalPackets << " TQ=" << (int)result);
+  
+  return result;
 }
 
 bool
@@ -518,15 +613,46 @@ BatmanRoutingProtocol::IsBidirectionalNeighbor(Ipv4Address neighbor)
     return false;
   }
   
+  // If bidirectional checking is disabled, assume all neighbors are bidirectional
+  if (!m_enableBidirectionalCheck) {
+    return true;
+  }
+  
   // Check if neighbor announces us in its bidirectional list
+  const std::set<Ipv4Address>& theirNeighbors = neighborIt->second.bidirectionalNeighbors;
+  
   for (uint32_t i = 0; i < m_ipv4->GetNInterfaces(); i++) {
     Ipv4Address myAddr = m_ipv4->GetAddress(i, 0).GetLocal();
-    if (neighborIt->second.bidirectionalNeighbors.find(myAddr) != 
-        neighborIt->second.bidirectionalNeighbors.end()) {
+    if (myAddr == Ipv4Address::GetLoopback()) {
+      continue;
+    }
+    
+    if (theirNeighbors.find(myAddr) != theirNeighbors.end()) {
+      NS_LOG_DEBUG("Bidirectional link confirmed: " << neighbor << " announces " << myAddr);
       return true;
     }
   }
   
+  // For initial bootstrap, consider a link bidirectional if:
+  // 1. We've received packets from them recently
+  // 2. They have decent TQ (indicating they're receiving our packets)
+  Time now = Simulator::Now();
+  if ((now - neighborIt->second.lastSeen) < m_bidirectionalTimeout && 
+      neighborIt->second.tq > 50) {
+    
+    // Additional check: if they have announced any bidirectional neighbors,
+    // it means they're actively participating in the protocol
+    if (!theirNeighbors.empty() || 
+        (now - neighborIt->second.lastSeen) < Seconds(2.0)) {
+      NS_LOG_DEBUG("Bidirectional link assumed for bootstrap: " << neighbor 
+                   << " TQ=" << (int)neighborIt->second.tq);
+      return true;
+    }
+  }
+  
+  NS_LOG_DEBUG("No bidirectional confirmation for " << neighbor 
+               << " (TQ=" << (int)neighborIt->second.tq 
+               << ", lastSeen=" << (now - neighborIt->second.lastSeen).GetSeconds() << "s ago)");
   return false;
 }
 

@@ -7,7 +7,7 @@
 #include "ns3/batman-helper.h"
 #include "ns3/batman-routing-protocol.h"
 //netanim for visualization
-#include "ns3/netanim-module.h" //abel netanim 
+#include "ns3/netanim-module.h" 
 
 using namespace ns3;
 
