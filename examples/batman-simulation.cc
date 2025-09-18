@@ -106,7 +106,12 @@ int main(int argc, char *argv[])
   batman.PrintRoutingTableAllAt(Seconds(10), routingStream);
   
   AnimationInterface anim("batman-animation.xml"); //abel netanim 
-  
+  // Optional: set node descriptions (IP, index, etc.)
+  for (uint32_t i = 0; i < nodes.GetN(); ++i)
+  {
+      anim.UpdateNodeDescription(nodes.Get(i), "Node-" + std::to_string(i)); // label
+      anim.UpdateNodeColor(nodes.Get(i), 0, 255, 0); // green
+  }
   NS_LOG_INFO("Starting simulation for " << duration << " seconds");
   
   Simulator::Stop(Seconds(duration));

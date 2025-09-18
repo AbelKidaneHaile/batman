@@ -105,6 +105,16 @@
 <nu p="s" t="0" id="3" w="1" h="1" />
 <nu p="s" t="0" id="4" w="1" h="1" />
 <ncs ncId="0" n="RemainingEnergy" t="DOUBLE" />
+<nu p="d" t="0" id="0" descr="Node-0" />
+<nu p="c" t="0" id="0" r="0" g="255" b="0" />
+<nu p="d" t="0" id="1" descr="Node-1" />
+<nu p="c" t="0" id="1" r="0" g="255" b="0" />
+<nu p="d" t="0" id="2" descr="Node-2" />
+<nu p="c" t="0" id="2" r="0" g="255" b="0" />
+<nu p="d" t="0" id="3" descr="Node-3" />
+<nu p="c" t="0" id="3" r="0" g="255" b="0" />
+<nu p="d" t="0" id="4" descr="Node-4" />
+<nu p="c" t="0" id="4" r="0" g="255" b="0" />
 <nu p="p" t="0" id="0" x="0" y="0" />
 <nu p="p" t="0" id="1" x="100" y="0" />
 <nu p="p" t="0" id="2" x="200" y="0" />
