@@ -105,7 +105,7 @@ int main(int argc, char *argv[])
   Ptr<OutputStreamWrapper> routingStream = Create<OutputStreamWrapper>("batman-routing.txt", std::ios::out);
   batman.PrintRoutingTableAllAt(Seconds(10), routingStream);
   
-  AnimationInterface anim("batman-animation.xml"); //abel netanim 
+  AnimationInterface anim("/home/ns3dce/dce-linux-dev/source/ns-3-dev/src/batman/batman-animation.xml"); //abel netanim 
   // Optional: set node descriptions (IP, index, etc.)
   for (uint32_t i = 0; i < nodes.GetN(); ++i)
   {
