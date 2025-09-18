@@ -6,6 +6,8 @@
 #include "ns3/applications-module.h"
 #include "ns3/batman-helper.h"
 #include "ns3/batman-routing-protocol.h"
+//netanim for visualization
+#include "ns3/netanim-module.h" //abel netanim 
 
 using namespace ns3;
 
@@ -102,6 +104,8 @@ int main(int argc, char *argv[])
   // Print routing tables
   Ptr<OutputStreamWrapper> routingStream = Create<OutputStreamWrapper>("batman-routing.txt", std::ios::out);
   batman.PrintRoutingTableAllAt(Seconds(10), routingStream);
+  
+  AnimationInterface anim("batman-animation.xml"); //abel netanim 
   
   NS_LOG_INFO("Starting simulation for " << duration << " seconds");
   
