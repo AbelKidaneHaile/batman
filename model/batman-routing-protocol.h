@@ -12,7 +12,7 @@
 #include "ns3/wifi-net-device.h"
 #include "ns3/socket.h"
 #include "ns3/udp-socket-factory.h"
-#include "batman-packet.h"
+#include "ns3/batman-packet.h"
 #include <map>
 #include <vector>
 #include <set>
@@ -77,6 +77,19 @@ protected:
 
 private:
   /**
+   * \brief Structure to hold route cache entries
+   */
+  struct RouteEntry {
+    Ipv4Address destination;     //!< Destination address
+    Ipv4Address nextHop;         //!< Next hop address
+    uint32_t interface;          //!< Interface to use
+    uint8_t metric;              //!< Route metric (hop count)
+    Time lastUpdate;             //!< Last update time
+    
+    RouteEntry() : interface(0), metric(0), lastUpdate(Seconds(0)) {}
+  };
+
+  /**
    * \brief Structure to hold neighbor information
    */
   struct NeighborInfo {
@@ -87,6 +100,7 @@ private:
     uint32_t interface;         //!< Interface through which neighbor is reachable
     Time bidirectionalTimeout; //!< Timeout for bidirectional link
     bool isBidirectional;       //!< Whether the link is bidirectional
+    std::vector<Ipv4Address> bidirectionalNeighbors; //!< List of neighbors announced by this neighbor
     
     NeighborInfo() : lastSeen(Seconds(0)), tq(0), lastSeqNum(0), interface(0), 
                      bidirectionalTimeout(Seconds(0)), isBidirectional(false) {}
@@ -103,7 +117,6 @@ private:
     Time lastUpdate;            //!< Last update time
     uint32_t interface;         //!< Interface to use for this route
     uint8_t hopCount;           //!< Number of hops to originator
-    std::vector<Ipv4Address> bidirectionalNeighbors; //!< List of bidirectional neighbors
     
     OriginatorInfo() : tq(0), lastSeqNum(0), lastUpdate(Seconds(0)), interface(0), hopCount(0) {}
   };
@@ -126,6 +139,7 @@ private:
   Ptr<Ipv4> m_ipv4;                                    //!< IPv4 object
   std::map<Ipv4Address, NeighborInfo> m_neighbors;     //!< Neighbor information table
   std::map<Ipv4Address, OriginatorInfo> m_originators; //!< Originator information table
+  std::map<Ipv4Address, RouteEntry> m_routeCache;      //!< Route cache for efficient lookups
   std::map<uint32_t, Ptr<Socket>> m_socketAddresses;  //!< Socket per interface
   std::map<Ipv4Address, SlidingWindow> m_slidingWindows; //!< Sliding windows for TQ calculation
   std::set<uint32_t> m_interfaceExclusions;            //!< Excluded interfaces
@@ -160,12 +174,6 @@ private:
   void SendBatmanPacket();
   
   /**
-   * \brief Process received Batman packet
-   * \param socket The socket that received the packet
-   */
-  void ProcessBatmanPacket(Ptr<Socket> socket);
-  
-  /**
    * \brief Purge old neighbors and originators
    */
   void PurgeNeighbors();
@@ -181,7 +189,7 @@ private:
   void PurgeTimerExpire();
   
   /**
-   * \brief Update route in routing table
+   * \brief Update route in routing cache
    * \param dest Destination address
    * \param nextHop Next hop address
    * \param interface Interface to use
@@ -241,7 +249,7 @@ private:
   bool IsBidirectionalNeighbor(Ipv4Address neighbor);
   
   /**
-   * \brief Remove route from routing table
+   * \brief Remove route from routing cache
    * \param dest Destination address
    */
   void RemoveRoute(Ipv4Address dest);

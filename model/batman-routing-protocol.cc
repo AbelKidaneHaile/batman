@@ -1,4 +1,4 @@
-#include "ns3/batman-routing-protocol.h"
+#include "batman-routing-protocol.h"
 #include "ns3/log.h"
 #include "ns3/inet-socket-address.h"
 #include "ns3/trace-source-accessor.h"
@@ -12,6 +12,7 @@
 #include "ns3/pointer.h"
 #include "ns3/ipv4-static-routing-helper.h"
 #include "ns3/ipv4-static-routing.h"
+#include <algorithm>
 
 namespace ns3 {
 
@@ -20,7 +21,8 @@ NS_OBJECT_ENSURE_REGISTERED(BatmanRoutingProtocol);
 
 const uint32_t BATMAN_PORT = 4305;
 
-TypeId BatmanRoutingProtocol::GetTypeId()
+TypeId
+BatmanRoutingProtocol::GetTypeId()
 {
   static TypeId tid = TypeId("ns3::BatmanRoutingProtocol")
     .SetParent<Ipv4RoutingProtocol>()
@@ -83,13 +85,15 @@ BatmanRoutingProtocol::~BatmanRoutingProtocol()
   NS_LOG_FUNCTION(this);
 }
 
-void BatmanRoutingProtocol::DoDispose()
+void
+BatmanRoutingProtocol::DoDispose()
 {
   NS_LOG_FUNCTION(this);
   
   m_ipv4 = 0;
   m_neighbors.clear();
   m_originators.clear();
+  m_routeCache.clear();
   m_slidingWindows.clear();
   
   for (std::map<uint32_t, Ptr<Socket>>::iterator iter = m_socketAddresses.begin();
@@ -105,7 +109,8 @@ void BatmanRoutingProtocol::DoDispose()
   Ipv4RoutingProtocol::DoDispose();
 }
 
-void BatmanRoutingProtocol::SetIpv4(Ptr<Ipv4> ipv4)
+void
+BatmanRoutingProtocol::SetIpv4(Ptr<Ipv4> ipv4)
 {
   NS_LOG_FUNCTION(this << ipv4);
   NS_ASSERT(ipv4 != 0);
@@ -120,7 +125,8 @@ void BatmanRoutingProtocol::SetIpv4(Ptr<Ipv4> ipv4)
   Simulator::ScheduleNow(&BatmanRoutingProtocol::Start, this);
 }
 
-void BatmanRoutingProtocol::Start()
+void
+BatmanRoutingProtocol::Start()
 {
   NS_LOG_FUNCTION(this);
   
@@ -135,16 +141,29 @@ void BatmanRoutingProtocol::Start()
       continue;
     }
     
+    // Check if we have a valid address on this interface
+    Ipv4InterfaceAddress ifaceAddr = m_ipv4->GetAddress(i, 0);
+    if (ifaceAddr.GetLocal() == Ipv4Address("0.0.0.0")) {
+      NS_LOG_WARN("Interface " << i << " has no valid IP address, skipping");
+      continue;
+    }
+    
     Ptr<Socket> socket = Socket::CreateSocket(GetObject<Node>(),
                                             UdpSocketFactory::GetTypeId());
     InetSocketAddress local = InetSocketAddress(Ipv4Address::GetAny(), BATMAN_PORT);
-    socket->Bind(local);
+    
+    if (socket->Bind(local) == -1) {
+      NS_LOG_ERROR("Failed to bind Batman socket on interface " << i);
+      continue;
+    }
+    
     socket->BindToNetDevice(m_ipv4->GetNetDevice(i));
     socket->SetAllowBroadcast(true);
     socket->SetRecvCallback(MakeCallback(&BatmanRoutingProtocol::RecvBatman, this));
     m_socketAddresses[i] = socket;
     
-    NS_LOG_INFO("Batman socket created for interface " << i);
+    NS_LOG_INFO("Batman socket created for interface " << i 
+                << " with address " << ifaceAddr.GetLocal());
   }
   
   // Start periodic broadcasts with jitter
@@ -155,13 +174,15 @@ void BatmanRoutingProtocol::Start()
   NS_LOG_INFO("Batman protocol started");
 }
 
-void BatmanRoutingProtocol::HelloTimerExpire()
+void
+BatmanRoutingProtocol::HelloTimerExpire()
 {
   SendBatmanPacket();
   m_helloTimer.Schedule(m_helloInterval);
 }
 
-void BatmanRoutingProtocol::SendBatmanPacket()
+void
+BatmanRoutingProtocol::SendBatmanPacket()
 {
   NS_LOG_FUNCTION(this);
   
@@ -179,6 +200,9 @@ void BatmanRoutingProtocol::SendBatmanPacket()
     batmanPacket.SetTQ(255); // Maximum quality for own packets
     batmanPacket.SetSeqNum(++m_seqNum);
     batmanPacket.SetTTL(m_maxTTL);
+    
+    // Note: Bidirectional neighbor announcement will be added when BatmanPacket
+    // class is extended with SetBidirectionalNeighbors() method
     
     Ptr<Packet> packet = Create<Packet>();
     packet->AddHeader(batmanPacket);
@@ -200,6 +224,10 @@ void BatmanRoutingProtocol::RecvBatman(Ptr<Socket> socket)
   Address sourceAddress;
   receivedPacket = socket->RecvFrom(sourceAddress);
   
+  if (receivedPacket == 0 || receivedPacket->GetSize() == 0) {
+    NS_LOG_WARN("RecvBatman: empty packet received");
+    return;
+  }
   InetSocketAddress inetSourceAddr = InetSocketAddress::ConvertFrom(sourceAddress);
   Ipv4Address sender = inetSourceAddr.GetIpv4();
   
@@ -235,6 +263,9 @@ void BatmanRoutingProtocol::RecvBatman(Ptr<Socket> socket)
     neighbor.lastSeqNum = batmanPacket.GetSeqNum();
     neighbor.interface = incomingInterface;
     neighbor.tq = GetSlidingWindowTQ(sender);
+    
+    // Note: Bidirectional neighbors list will be populated when BatmanPacket
+    // class supports GetBidirectionalNeighbors() method
     
     if (m_enableBidirectionalCheck) {
       // Check for bidirectionality
@@ -310,7 +341,8 @@ void BatmanRoutingProtocol::RecvBatman(Ptr<Socket> socket)
   }
 }
 
-void BatmanRoutingProtocol::ForwardBatmanPacket(const BatmanPacket& receivedPacket, uint32_t incomingInterface)
+void
+BatmanRoutingProtocol::ForwardBatmanPacket(const BatmanPacket& receivedPacket, uint32_t incomingInterface)
 {
   NS_LOG_FUNCTION(this);
   
@@ -340,7 +372,8 @@ void BatmanRoutingProtocol::ForwardBatmanPacket(const BatmanPacket& receivedPack
   }
 }
 
-bool BatmanRoutingProtocol::IsMyOwnBroadcast(const BatmanPacket& packet)
+bool
+BatmanRoutingProtocol::IsMyOwnBroadcast(const BatmanPacket& packet)
 {
   for (uint32_t i = 0; i < m_ipv4->GetNInterfaces(); i++) {
     if (m_ipv4->GetAddress(i, 0).GetLocal() == packet.GetOriginator()) {
@@ -350,7 +383,8 @@ bool BatmanRoutingProtocol::IsMyOwnBroadcast(const BatmanPacket& packet)
   return false;
 }
 
-uint8_t BatmanRoutingProtocol::CalculateTQ(Ipv4Address neighbor, uint8_t receivedTQ)
+uint8_t
+BatmanRoutingProtocol::CalculateTQ(Ipv4Address neighbor, uint8_t receivedTQ)
 {
   if (receivedTQ < m_hopPenalty) {
     return 0;
@@ -363,15 +397,16 @@ uint8_t BatmanRoutingProtocol::CalculateTQ(Ipv4Address neighbor, uint8_t receive
     auto neighborIt = m_neighbors.find(neighbor);
     if (neighborIt != m_neighbors.end()) {
       // Apply neighbor's link quality
-      uint32_t adjustedTQ = (penalizedTQ * neighborIt->second.tq) / 255;
-      return static_cast<uint8_t>(adjustedTQ);
+      uint32_t adjustedTQ = (static_cast<uint32_t>(penalizedTQ) * neighborIt->second.tq) / 255;
+      return static_cast<uint8_t>(std::min(adjustedTQ, static_cast<uint32_t>(255)));
     }
   }
   
   return penalizedTQ;
 }
 
-void BatmanRoutingProtocol::UpdateSlidingWindow(Ipv4Address neighbor, uint16_t seqNum)
+void
+BatmanRoutingProtocol::UpdateSlidingWindow(Ipv4Address neighbor, uint16_t seqNum)
 {
   auto windowIt = m_slidingWindows.find(neighbor);
   if (windowIt == m_slidingWindows.end()) {
@@ -392,7 +427,8 @@ void BatmanRoutingProtocol::UpdateSlidingWindow(Ipv4Address neighbor, uint16_t s
   window.currentIndex = (window.currentIndex + 1) % window.windowSize;
 }
 
-uint8_t BatmanRoutingProtocol::GetSlidingWindowTQ(Ipv4Address neighbor)
+uint8_t
+BatmanRoutingProtocol::GetSlidingWindowTQ(Ipv4Address neighbor)
 {
   auto windowIt = m_slidingWindows.find(neighbor);
   if (windowIt == m_slidingWindows.end()) {
@@ -409,61 +445,67 @@ uint8_t BatmanRoutingProtocol::GetSlidingWindowTQ(Ipv4Address neighbor)
   return static_cast<uint8_t>(std::min(tq, static_cast<uint32_t>(255)));
 }
 
-bool BatmanRoutingProtocol::IsBidirectionalNeighbor(Ipv4Address neighbor)
+bool
+BatmanRoutingProtocol::IsBidirectionalNeighbor(Ipv4Address neighbor)
 {
-  // Simple bidirectional check - in real implementation would
-  // check if neighbor announces us in its originator messages
   auto neighborIt = m_neighbors.find(neighbor);
   if (neighborIt == m_neighbors.end()) {
     return false;
   }
   
-  // For simplification, consider link bidirectional if we've heard from
-  // neighbor recently and TQ is above threshold
+  // Simplified bidirectional check until BatmanPacket supports neighbor announcements
+  // In a complete implementation, check if neighbor announces us in its bidirectional list
+  
+  // For now, use TQ-based check
   Time now = Simulator::Now();
   return (now - neighborIt->second.lastSeen < m_bidirectionalTimeout) && 
-         (neighborIt->second.tq > 50); // Threshold for good link quality
+         (neighborIt->second.tq > 50);
 }
 
-bool BatmanRoutingProtocol::IsNewerSequence(uint16_t newSeq, uint16_t oldSeq)
+bool
+BatmanRoutingProtocol::IsNewerSequence(uint16_t newSeq, uint16_t oldSeq)
 {
   // Handle sequence number wraparound
   return (int16_t)(newSeq - oldSeq) > 0;
 }
 
-void BatmanRoutingProtocol::UpdateRoute(Ipv4Address dest, Ipv4Address nextHop, uint32_t interface, uint8_t hopCount)
+void
+BatmanRoutingProtocol::UpdateRoute(Ipv4Address dest, Ipv4Address nextHop, uint32_t interface, uint8_t hopCount)
 {
   NS_LOG_FUNCTION(this << dest << nextHop << interface << (int)hopCount);
   
-  // This is a simplified route update - in a real implementation,
-  // you would integrate with ns-3's routing table more thoroughly
-  Ptr<Ipv4StaticRouting> staticRouting = CreateObject<Ipv4StaticRouting>();
-  staticRouting->SetIpv4(m_ipv4);
+  // Update route cache for efficient lookups
+  RouteEntry& entry = m_routeCache[dest];
+  entry.destination = dest;
+  entry.nextHop = nextHop;
+  entry.interface = interface;
+  entry.metric = hopCount;
+  entry.lastUpdate = Simulator::Now();
   
-  // Remove old route if it exists
-  RemoveRoute(dest);
-  
-  // Add new route
-  staticRouting->AddHostRouteTo(dest, nextHop, interface, hopCount);
-  
-  NS_LOG_DEBUG("Route updated: " << dest << " via " << nextHop 
+  NS_LOG_DEBUG("Route cached: " << dest << " via " << nextHop 
                << " interface " << interface << " hops " << (int)hopCount);
 }
 
-void BatmanRoutingProtocol::RemoveRoute(Ipv4Address dest)
+void
+BatmanRoutingProtocol::RemoveRoute(Ipv4Address dest)
 {
-  // In a real implementation, you would properly remove the route
-  // from the routing table. This is simplified for demonstration.
-  NS_LOG_DEBUG("Removing route to " << dest);
+  NS_LOG_FUNCTION(this << dest);
+  
+  // Remove from route cache
+  m_routeCache.erase(dest);
+  
+  NS_LOG_DEBUG("Route removed from cache: " << dest);
 }
 
-void BatmanRoutingProtocol::PurgeTimerExpire()
+void
+BatmanRoutingProtocol::PurgeTimerExpire()
 {
   PurgeNeighbors();
   m_purgeTimer.Schedule(m_purgeTimeout);
 }
 
-void BatmanRoutingProtocol::PurgeNeighbors()
+void
+BatmanRoutingProtocol::PurgeNeighbors()
 {
   NS_LOG_FUNCTION(this);
   
@@ -496,16 +538,50 @@ void BatmanRoutingProtocol::PurgeNeighbors()
       ++it;
     }
   }
+  
+  // Purge old route cache entries
+  for (auto it = m_routeCache.begin(); it != m_routeCache.end();) {
+    if (now - it->second.lastUpdate > m_purgeTimeout) {
+      NS_LOG_DEBUG("Purging cached route " << it->first);
+      it = m_routeCache.erase(it);
+    } else {
+      ++it;
+    }
+  }
 }
 
-Ptr<Ipv4Route> BatmanRoutingProtocol::RouteOutput(Ptr<Packet> p, const Ipv4Header &header,
+Ptr<Ipv4Route>
+BatmanRoutingProtocol::RouteOutput(Ptr<Packet> p, const Ipv4Header &header,
                                  Ptr<NetDevice> oif, Socket::SocketErrno &sockerr)
 {
   NS_LOG_FUNCTION(this << header << oif);
   
   Ipv4Address destination = header.GetDestination();
   
-  // Check if we have a route to the destination
+  // First check our route cache for fast lookup
+  auto routeIt = m_routeCache.find(destination);
+  if (routeIt != m_routeCache.end()) {
+    // Verify the route is still valid by checking if next hop is still reachable
+    auto neighborIt = m_neighbors.find(routeIt->second.nextHop);
+    if (neighborIt != m_neighbors.end() && 
+        (Simulator::Now() - neighborIt->second.lastSeen) < m_purgeTimeout) {
+      
+      Ptr<Ipv4Route> route = Create<Ipv4Route>();
+      route->SetDestination(destination);
+      route->SetGateway(routeIt->second.nextHop);
+      route->SetSource(m_ipv4->GetAddress(routeIt->second.interface, 0).GetLocal());
+      route->SetOutputDevice(m_ipv4->GetNetDevice(routeIt->second.interface));
+      sockerr = Socket::ERROR_NOTERROR;
+      
+      NS_LOG_DEBUG("Cached route found for " << destination << " via " << routeIt->second.nextHop);
+      return route;
+    } else {
+      // Remove stale cached route
+      m_routeCache.erase(routeIt);
+    }
+  }
+  
+  // Check if we have a route to the destination from originators table
   auto originatorIt = m_originators.find(destination);
   if (originatorIt != m_originators.end()) {
     Ptr<Ipv4Route> route = Create<Ipv4Route>();
@@ -515,7 +591,11 @@ Ptr<Ipv4Route> BatmanRoutingProtocol::RouteOutput(Ptr<Packet> p, const Ipv4Heade
     route->SetOutputDevice(m_ipv4->GetNetDevice(originatorIt->second.interface));
     sockerr = Socket::ERROR_NOTERROR;
     
-    NS_LOG_DEBUG("Route found for " << destination << " via " << originatorIt->second.nextHop);
+    // Cache this route for future use
+    UpdateRoute(destination, originatorIt->second.nextHop, 
+               originatorIt->second.interface, originatorIt->second.hopCount);
+    
+    NS_LOG_DEBUG("Originator route found for " << destination << " via " << originatorIt->second.nextHop);
     return route;
   }
   
@@ -529,6 +609,9 @@ Ptr<Ipv4Route> BatmanRoutingProtocol::RouteOutput(Ptr<Packet> p, const Ipv4Heade
     route->SetOutputDevice(m_ipv4->GetNetDevice(neighborIt->second.interface));
     sockerr = Socket::ERROR_NOTERROR;
     
+    // Cache direct route
+    UpdateRoute(destination, destination, neighborIt->second.interface, 1);
+    
     NS_LOG_DEBUG("Direct route found for neighbor " << destination);
     return route;
   }
@@ -538,7 +621,8 @@ Ptr<Ipv4Route> BatmanRoutingProtocol::RouteOutput(Ptr<Packet> p, const Ipv4Heade
   return 0;
 }
 
-bool BatmanRoutingProtocol::RouteInput(Ptr<const Packet> p, const Ipv4Header &header,
+bool
+BatmanRoutingProtocol::RouteInput(Ptr<const Packet> p, const Ipv4Header &header,
                                 Ptr<const NetDevice> idev, UnicastForwardCallback ucb,
                                 MulticastForwardCallback mcb, LocalDeliverCallback lcb,
                                 ErrorCallback ecb)
@@ -585,7 +669,21 @@ bool BatmanRoutingProtocol::RouteInput(Ptr<const Packet> p, const Ipv4Header &he
     return true;
   }
   
-  // Forward packet if route exists
+  // Check route cache first for forwarding
+  auto routeIt = m_routeCache.find(destination);
+  if (routeIt != m_routeCache.end()) {
+    Ptr<Ipv4Route> route = Create<Ipv4Route>();
+    route->SetDestination(destination);
+    route->SetGateway(routeIt->second.nextHop);
+    route->SetSource(header.GetSource());
+    route->SetOutputDevice(m_ipv4->GetNetDevice(routeIt->second.interface));
+    
+    NS_LOG_DEBUG("Forwarding packet via cached route to " << destination << " via " << routeIt->second.nextHop);
+    ucb(route, p, header);
+    return true;
+  }
+  
+  // Forward packet if route exists in originators table
   auto originatorIt = m_originators.find(destination);
   if (originatorIt != m_originators.end()) {
     Ptr<Ipv4Route> route = Create<Ipv4Route>();
@@ -617,7 +715,8 @@ bool BatmanRoutingProtocol::RouteInput(Ptr<const Packet> p, const Ipv4Header &he
   return false;
 }
 
-void BatmanRoutingProtocol::NotifyInterfaceUp(uint32_t interface)
+void
+BatmanRoutingProtocol::NotifyInterfaceUp(uint32_t interface)
 {
   NS_LOG_FUNCTION(this << interface);
   
@@ -641,7 +740,8 @@ void BatmanRoutingProtocol::NotifyInterfaceUp(uint32_t interface)
   }
 }
 
-void BatmanRoutingProtocol::NotifyInterfaceDown(uint32_t interface)
+void
+BatmanRoutingProtocol::NotifyInterfaceDown(uint32_t interface)
 {
   NS_LOG_FUNCTION(this << interface);
   
@@ -673,21 +773,34 @@ void BatmanRoutingProtocol::NotifyInterfaceDown(uint32_t interface)
       ++it;
     }
   }
+  
+  // Remove cached routes using this interface
+  for (auto it = m_routeCache.begin(); it != m_routeCache.end();) {
+    if (it->second.interface == interface) {
+      NS_LOG_DEBUG("Removing cached route " << it->first << " due to interface down");
+      it = m_routeCache.erase(it);
+    } else {
+      ++it;
+    }
+  }
 }
 
-void BatmanRoutingProtocol::NotifyAddAddress(uint32_t interface, Ipv4InterfaceAddress address)
+void
+BatmanRoutingProtocol::NotifyAddAddress(uint32_t interface, Ipv4InterfaceAddress address)
 {
   NS_LOG_FUNCTION(this << interface << address);
   // Address changes might require socket recreation, but we'll keep it simple
 }
 
-void BatmanRoutingProtocol::NotifyRemoveAddress(uint32_t interface, Ipv4InterfaceAddress address)
+void
+BatmanRoutingProtocol::NotifyRemoveAddress(uint32_t interface, Ipv4InterfaceAddress address)
 {
   NS_LOG_FUNCTION(this << interface << address);
   // Address changes might require socket recreation, but we'll keep it simple
 }
 
-void BatmanRoutingProtocol::PrintRoutingTable(Ptr<OutputStreamWrapper> stream, Time::Unit unit) const
+void
+BatmanRoutingProtocol::PrintRoutingTable(Ptr<OutputStreamWrapper> stream, Time::Unit unit) const
 {
   NS_LOG_FUNCTION(this << stream);
   
@@ -716,10 +829,23 @@ void BatmanRoutingProtocol::PrintRoutingTable(Ptr<OutputStreamWrapper> stream, T
                         << (Simulator::Now() - neighbor.second.lastSeen).As(unit) << " ago\n";
   }
   
+  *stream->GetStream() << "\nRoute Cache:\n";
+  *stream->GetStream() << "Destination\t\tNext Hop\t\tMetric\tInterface\tLast Update\n";
+  *stream->GetStream() << "------------------------------------------------------------\n";
+  
+  for (const auto& route : m_routeCache) {
+    *stream->GetStream() << route.first << "\t\t"
+                        << route.second.nextHop << "\t\t"
+                        << (int)route.second.metric << "\t"
+                        << route.second.interface << "\t\t"
+                        << (Simulator::Now() - route.second.lastUpdate).As(unit) << " ago\n";
+  }
+  
   *stream->GetStream() << "\n";
 }
 
-uint32_t BatmanRoutingProtocol::GetInterfaceForSocket(Ptr<Socket> socket) const
+uint32_t
+BatmanRoutingProtocol::GetInterfaceForSocket(Ptr<Socket> socket) const
 {
   for (const auto& pair : m_socketAddresses) {
     if (pair.second == socket) {
@@ -729,12 +855,14 @@ uint32_t BatmanRoutingProtocol::GetInterfaceForSocket(Ptr<Socket> socket) const
   return std::numeric_limits<uint32_t>::max();
 }
 
-bool BatmanRoutingProtocol::IsInterfaceExcluded(uint32_t interface) const
+bool
+BatmanRoutingProtocol::IsInterfaceExcluded(uint32_t interface) const
 {
   return m_interfaceExclusions.find(interface) != m_interfaceExclusions.end();
 }
 
-Ptr<Socket> BatmanRoutingProtocol::FindSocketWithInterfaceAddress(Ipv4InterfaceAddress addr) const
+Ptr<Socket>
+BatmanRoutingProtocol::FindSocketWithInterfaceAddress(Ipv4InterfaceAddress addr) const
 {
   for (const auto& pair : m_socketAddresses) {
     if (m_ipv4->GetAddress(pair.first, 0) == addr) {
@@ -744,7 +872,8 @@ Ptr<Socket> BatmanRoutingProtocol::FindSocketWithInterfaceAddress(Ipv4InterfaceA
   return 0;
 }
 
-int64_t BatmanRoutingProtocol::AssignStreams(int64_t stream)
+int64_t
+BatmanRoutingProtocol::AssignStreams(int64_t stream)
 {
   NS_LOG_FUNCTION(this << stream);
   m_uniformRandomVariable->SetStream(stream);
