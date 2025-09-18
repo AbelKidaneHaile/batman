@@ -98,11 +98,11 @@ int main(int argc, char *argv[])
   
   // Enable tracing
   AsciiTraceHelper ascii;
-  wifiPhy.EnableAsciiAll(ascii.CreateFileStream("batman-simulation.tr"));
-  wifiPhy.EnablePcapAll("batman-simulation", false);
+  wifiPhy.EnableAsciiAll(ascii.CreateFileStream("/home/ns3dce/dce-linux-dev/source/ns-3-dev/src/batman/trace/batman-simulation.tr"));
+  wifiPhy.EnablePcapAll("/home/ns3dce/dce-linux-dev/source/ns-3-dev/src/batman/pcap/batman-simulation", false);
   
   // Print routing tables
-  Ptr<OutputStreamWrapper> routingStream = Create<OutputStreamWrapper>("batman-routing.txt", std::ios::out);
+  Ptr<OutputStreamWrapper> routingStream = Create<OutputStreamWrapper>("/home/ns3dce/dce-linux-dev/source/ns-3-dev/src/batman/routing/batman-routing.txt", std::ios::out);
   batman.PrintRoutingTableAllAt(Seconds(10), routingStream);
   
   AnimationInterface anim("/home/ns3dce/dce-linux-dev/source/ns-3-dev/src/batman/batman-animation.xml"); //abel netanim 

@@ -1,0 +1,210 @@
+Batman Routing Table at +10.0s:
+Destination		Next Hop		TQ	Hops	Interface	Last Update
+--------------------------------------------------------------------
+
+Direct Neighbors:
+Neighbor		TQ	Bidirectional	Interface	Last Seen
+--------------------------------------------------------
+10.1.1.2		39	No		1		+0.99213572499999999995s ago
+10.1.1.3		39	No		1		+0.94113530699999999995s ago
+10.1.1.4		39	No		1		+0.97813504899999999996s ago
+10.1.1.5		39	No		1		+0.90713468799999999996s ago
+10.1.1.6		39	No		1		+0.96513567499999999995s ago
+10.1.1.7		39	No		1		+0.93213554899999999999s ago
+10.1.1.8		39	No		1		+0.92113524199999999997s ago
+10.1.1.9		39	No		1		+0.93313500099999999995s ago
+10.1.1.10		39	No		1		+0.91113464799999999995s ago
+
+Route Cache:
+Destination		Next Hop		Metric	Interface	Last Update
+------------------------------------------------------------
+
+Batman Routing Table at +10.0s:
+Destination		Next Hop		TQ	Hops	Interface	Last Update
+--------------------------------------------------------------------
+
+Direct Neighbors:
+Neighbor		TQ	Bidirectional	Interface	Last Seen
+--------------------------------------------------------
+10.1.1.1		39	No		1		+0.95413572499999999997s ago
+10.1.1.3		39	No		1		+0.94113558299999999996s ago
+10.1.1.4		39	No		1		+0.97813532399999999996s ago
+10.1.1.5		39	No		1		+0.90713496299999999995s ago
+10.1.1.6		39	No		1		+0.96513557800000000000s ago
+10.1.1.7		39	No		1		+0.93213568799999999996s ago
+10.1.1.8		39	No		1		+0.92113546599999999998s ago
+10.1.1.9		39	No		1		+0.93313525499999999999s ago
+10.1.1.10		39	No		1		+0.91113491199999999999s ago
+
+Route Cache:
+Destination		Next Hop		Metric	Interface	Last Update
+------------------------------------------------------------
+
+Batman Routing Table at +10.0s:
+Destination		Next Hop		TQ	Hops	Interface	Last Update
+--------------------------------------------------------------------
+
+Direct Neighbors:
+Neighbor		TQ	Bidirectional	Interface	Last Seen
+--------------------------------------------------------
+10.1.1.1		39	No		1		+0.95413530799999999996s ago
+10.1.1.2		39	No		1		+0.99213558499999999996s ago
+10.1.1.4		39	No		1		+0.97813574099999999996s ago
+10.1.1.5		39	No		1		+0.90713538299999999995s ago
+10.1.1.6		39	No		1		+0.96513523799999999996s ago
+10.1.1.7		39	No		1		+0.93213552099999999999s ago
+10.1.1.8		39	No		1		+0.92113562899999999999s ago
+10.1.1.9		39	No		1		+0.93313558099999999998s ago
+10.1.1.10		39	No		1		+0.91113529399999999999s ago
+
+Route Cache:
+Destination		Next Hop		Metric	Interface	Last Update
+------------------------------------------------------------
+
+Batman Routing Table at +10.0s:
+Destination		Next Hop		TQ	Hops	Interface	Last Update
+--------------------------------------------------------------------
+
+Direct Neighbors:
+Neighbor		TQ	Bidirectional	Interface	Last Seen
+--------------------------------------------------------
+10.1.1.1		39	No		1		+0.95413504899999999995s ago
+10.1.1.2		39	No		1		+0.99213532399999999998s ago
+10.1.1.3		39	No		1		+0.94113574199999999997s ago
+10.1.1.5		39	No		1		+0.90713563899999999997s ago
+10.1.1.6		39	No		1		+0.96513499600000000000s ago
+10.1.1.7		39	No		1		+0.93213530099999999999s ago
+10.1.1.8		39	No		1		+0.92113552399999999997s ago
+10.1.1.9		39	No		1		+0.93313565199999999996s ago
+10.1.1.10		39	No		1		+0.91113549199999999996s ago
+
+Route Cache:
+Destination		Next Hop		Metric	Interface	Last Update
+------------------------------------------------------------
+
+Batman Routing Table at +10.0s:
+Destination		Next Hop		TQ	Hops	Interface	Last Update
+--------------------------------------------------------------------
+
+Direct Neighbors:
+Neighbor		TQ	Bidirectional	Interface	Last Seen
+--------------------------------------------------------
+10.1.1.1		39	No		1		+0.95413469099999999995s ago
+10.1.1.2		39	No		1		+0.99213496899999999997s ago
+10.1.1.3		39	No		1		+0.94113538299999999995s ago
+10.1.1.4		39	No		1		+0.97813564399999999995s ago
+10.1.1.6		39	No		1		+0.96513465699999999997s ago
+10.1.1.7		39	No		1		+0.93213497199999999996s ago
+10.1.1.8		39	No		1		+0.92113525599999999998s ago
+10.1.1.9		39	No		1		+0.93313550199999999998s ago
+10.1.1.10		39	No		1		+0.91113564999999999995s ago
+
+Route Cache:
+Destination		Next Hop		Metric	Interface	Last Update
+------------------------------------------------------------
+
+Batman Routing Table at +10.0s:
+Destination		Next Hop		TQ	Hops	Interface	Last Update
+--------------------------------------------------------------------
+
+Direct Neighbors:
+Neighbor		TQ	Bidirectional	Interface	Last Seen
+--------------------------------------------------------
+10.1.1.1		39	No		1		+0.95413567599999999996s ago
+10.1.1.2		39	No		1		+0.99213557699999999995s ago
+10.1.1.3		39	No		1		+0.94113523799999999994s ago
+10.1.1.4		39	No		1		+0.97813499600000000000s ago
+10.1.1.5		39	No		1		+0.90713465399999999996s ago
+10.1.1.7		39	No		1		+0.93213567499999999997s ago
+10.1.1.8		39	No		1		+0.92113534000000000000s ago
+10.1.1.9		39	No		1		+0.93313506399999999997s ago
+10.1.1.10		39	No		1		+0.91113469900000000000s ago
+
+Route Cache:
+Destination		Next Hop		Metric	Interface	Last Update
+------------------------------------------------------------
+
+Batman Routing Table at +10.0s:
+Destination		Next Hop		TQ	Hops	Interface	Last Update
+--------------------------------------------------------------------
+
+Direct Neighbors:
+Neighbor		TQ	Bidirectional	Interface	Last Seen
+--------------------------------------------------------
+10.1.1.1		39	No		1		+0.95413554999999999998s ago
+10.1.1.2		39	No		1		+0.99213568999999999999s ago
+10.1.1.3		39	No		1		+0.94113552199999999997s ago
+10.1.1.4		39	No		1		+0.97813529999999999996s ago
+10.1.1.5		39	No		1		+0.90713497199999999998s ago
+10.1.1.6		39	No		1		+0.96513567599999999997s ago
+10.1.1.8		39	No		1		+0.92113566199999999997s ago
+10.1.1.9		39	No		1		+0.93313538799999999997s ago
+10.1.1.10		39	No		1		+0.91113502399999999996s ago
+
+Route Cache:
+Destination		Next Hop		Metric	Interface	Last Update
+------------------------------------------------------------
+
+Batman Routing Table at +10.0s:
+Destination		Next Hop		TQ	Hops	Interface	Last Update
+--------------------------------------------------------------------
+
+Direct Neighbors:
+Neighbor		TQ	Bidirectional	Interface	Last Seen
+--------------------------------------------------------
+10.1.1.1		39	No		1		+0.95413524399999999998s ago
+10.1.1.2		39	No		1		+0.99213547000000000000s ago
+10.1.1.3		39	No		1		+0.94113562799999999996s ago
+10.1.1.4		39	No		1		+0.97813552300000000000s ago
+10.1.1.5		39	No		1		+0.90713525599999999996s ago
+10.1.1.6		39	No		1		+0.96513534299999999998s ago
+10.1.1.7		39	No		1		+0.93213566199999999998s ago
+10.1.1.9		39	No		1		+0.93313572000000000000s ago
+10.1.1.10		39	No		1		+0.91113535799999999996s ago
+
+Route Cache:
+Destination		Next Hop		Metric	Interface	Last Update
+------------------------------------------------------------
+
+Batman Routing Table at +10.0s:
+Destination		Next Hop		TQ	Hops	Interface	Last Update
+--------------------------------------------------------------------
+
+Direct Neighbors:
+Neighbor		TQ	Bidirectional	Interface	Last Seen
+--------------------------------------------------------
+10.1.1.1		39	No		1		+0.95413500199999999997s ago
+10.1.1.2		39	No		1		+0.99213525699999999995s ago
+10.1.1.3		39	No		1		+0.94113557999999999996s ago
+10.1.1.4		39	No		1		+0.97813565199999999997s ago
+10.1.1.5		39	No		1		+0.90713550300000000000s ago
+10.1.1.6		39	No		1		+0.96513506500000000000s ago
+10.1.1.7		39	No		1		+0.93213538799999999995s ago
+10.1.1.8		39	No		1		+0.92113571999999999996s ago
+10.1.1.10		39	No		1		+0.91113563599999999995s ago
+
+Route Cache:
+Destination		Next Hop		Metric	Interface	Last Update
+------------------------------------------------------------
+
+Batman Routing Table at +10.0s:
+Destination		Next Hop		TQ	Hops	Interface	Last Update
+--------------------------------------------------------------------
+
+Direct Neighbors:
+Neighbor		TQ	Bidirectional	Interface	Last Seen
+--------------------------------------------------------
+10.1.1.1		39	No		1		+0.95413464900000000000s ago
+10.1.1.2		39	No		1		+0.99213491499999999999s ago
+10.1.1.3		39	No		1		+0.94113529300000000000s ago
+10.1.1.4		39	No		1		+0.97813549599999999995s ago
+10.1.1.5		39	No		1		+0.90713564999999999998s ago
+10.1.1.6		39	No		1		+0.96513470000000000000s ago
+10.1.1.7		39	No		1		+0.93213502399999999997s ago
+10.1.1.8		39	No		1		+0.92113535799999999996s ago
+10.1.1.9		39	No		1		+0.93313563599999999997s ago
+
+Route Cache:
+Destination		Next Hop		Metric	Interface	Last Update
+------------------------------------------------------------
+
