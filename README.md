@@ -6,6 +6,25 @@
 
 Simple simulation code for simulating the batman protocol in ns-3. 
 
+## Prerequisite 
+Install Docker in your PC by following the installation instructions from [Docker](https://docs.docker.com/engine/install/)
+For Windows, install the Docker Desktop Application. 
+For Ubuntu, install it using the following commands.
+```bash
+sudo apt update
+sudo apt install docker.io
+
+# to verify installation just type
+docker
+```
+To avoid usign sudo everytime we use docker, create a group and add the user to it
+```bash
+sudo groupadd docker
+sudo usermod -aG docker $USER
+# verify using 
+docker run hello-world
+```
+
 ## How to use
 Clone this repo and pull the image for the project from Docker Hub.
 
@@ -31,7 +50,5 @@ Now, we are ready to run ns3 terminal commands using waf. Make sure to configure
 Finally, we can run the simulation
 
 ```bash 
-./waf --run batman-simulation
-./waf --run "batman-simulation --nNodes=15 --duration=200"
-./test.py -s batman
+./waf --run "batman-simulation --nNodes=5 --duration=12"
 ```
