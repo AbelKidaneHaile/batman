@@ -608,45 +608,51 @@ BatmanRoutingProtocol::GetSlidingWindowTQ(Ipv4Address neighbor)
   
   const SlidingWindow& window = windowIt->second;
   
-  // If we haven't filled the window yet, calculate based on received packets so far
-  uint32_t totalPackets = window.windowSize;
+  // Count actual packets received vs window size
   uint32_t receivedPackets = window.receivedCount;
+  uint32_t windowSize = window.windowSize;
   
-  // For newly discovered neighbors, be more lenient with TQ calculation
-  // Count the actual slots that have been used
-  uint32_t usedSlots = 0;
-  for (uint32_t i = 0; i < window.windowSize; i++) {
-    // Count slots that have been explicitly set (either true or false)
-    usedSlots++;
-  }
-  
-  // If we have very few samples, use a more optimistic calculation
   if (receivedPackets == 0) {
     return 0;
   }
   
-  // For initial packets, give higher weight to successful reception
-  if (usedSlots < window.windowSize / 4) {
-    // Use actual received vs used slots for new neighbors
-    if (usedSlots > 0) {
-      totalPackets = usedSlots;
-    } else {
-      totalPackets = 1; // At least one packet
+  // For newly discovered neighbors with few samples, be more generous
+  // Count how many slots have been used (non-zero entries)
+  uint32_t usedSlots = 0;
+  for (uint32_t i = 0; i < windowSize; i++) {
+    if (window.receivedPackets[i]) {
+      usedSlots++;
     }
   }
   
-  // Calculate TQ as percentage of received packets (0-255 scale)
-  uint32_t tq = (receivedPackets * 255) / totalPackets;
+  // If we have fewer received packets than used slots, something is wrong
+  if (usedSlots > receivedPackets) {
+    usedSlots = receivedPackets;
+  }
   
-  // Ensure minimum TQ for functioning links
-  if (tq > 0 && tq < 50 && receivedPackets > 0) {
-    tq = 50; // Minimum viable TQ
+  // For initial period, use a more optimistic calculation
+  uint32_t effectiveWindowSize = windowSize;
+  
+  // If we haven't filled the window yet, consider only used portion
+  if (usedSlots < windowSize / 2) {
+    // Use smaller effective window for new neighbors
+    effectiveWindowSize = std::max(static_cast<uint32_t>(8), usedSlots * 2);
+  }
+  
+  // Calculate TQ as percentage (0-255 scale)
+  uint32_t tq = (receivedPackets * 255) / effectiveWindowSize;
+  
+  // Apply minimum TQ for functioning links (if we're receiving anything)
+  if (tq > 0 && tq < 100) {
+    // Scale up low TQ values to make them more realistic for good links
+    tq = std::min(static_cast<uint32_t>(200), tq * 2 + 50);
   }
   
   uint8_t result = static_cast<uint8_t>(std::min(tq, static_cast<uint32_t>(255)));
   
-  NS_LOG_DEBUG("TQ calculation for " << neighbor << ": received=" << receivedPackets 
-               << " total=" << totalPackets << " TQ=" << (int)result);
+  NS_LOG_DEBUG("TQ for " << neighbor << ": received=" << receivedPackets 
+               << " windowSize=" << windowSize << " effectiveSize=" << effectiveWindowSize 
+               << " usedSlots=" << usedSlots << " TQ=" << (int)result);
   
   return result;
 }
@@ -1076,40 +1082,46 @@ BatmanRoutingProtocol::PrintRoutingTable(Ptr<OutputStreamWrapper> stream, Time::
   NS_LOG_FUNCTION(this << stream);
   
   *stream->GetStream() << "Batman Routing Table at " << Simulator::Now().As(unit) << ":\n";
-  *stream->GetStream() << "Destination\t\tNext Hop\t\tTQ\tHops\tInterface\tLast Update\n";
-  *stream->GetStream() << "--------------------------------------------------------------------\n";
+  *stream->GetStream() << "Destination\t\tNext Hop\t\tMetric(TQ)\tBidirectional\n";
+  *stream->GetStream() << "----------------------------------------------------------------\n";
   
   for (const auto& entry : m_originators) {
+    // For bidirectional status, check the actual destination if it's a direct route,
+    // otherwise check the next hop
+    int bidirectional = 0;
+    
+    if (entry.first == entry.second.nextHop) {
+      // Direct route - check if destination is bidirectional
+      auto neighborIt = m_neighbors.find(entry.first);
+      if (neighborIt != m_neighbors.end()) {
+        bidirectional = neighborIt->second.isBidirectional ? 1 : 0;
+      }
+    } else {
+      // Multi-hop route - check if next hop is bidirectional
+      auto neighborIt = m_neighbors.find(entry.second.nextHop);
+      if (neighborIt != m_neighbors.end()) {
+        bidirectional = neighborIt->second.isBidirectional ? 1 : 0;
+      }
+    }
+    
     *stream->GetStream() << entry.first << "\t\t"
                         << entry.second.nextHop << "\t\t"
-                        << (int)entry.second.tq << "\t"
-                        << (int)entry.second.hopCount << "\t"
-                        << entry.second.interface << "\t\t"
-                        << (Simulator::Now() - entry.second.lastUpdate).As(unit) << " ago\n";
+                        << (int)entry.second.tq << "\t\t"
+                        << bidirectional << "\n";
   }
   
-  *stream->GetStream() << "\nDirect Neighbors:\n";
-  *stream->GetStream() << "Neighbor\t\tTQ\tBidirectional\tInterface\tLast Seen\n";
-  *stream->GetStream() << "--------------------------------------------------------\n";
+  // Also show direct neighbors that might not be in originators table
+  *stream->GetStream() << "\nDirect Neighbors (not in routing table):\n";
+  *stream->GetStream() << "Neighbor\t\tMetric(TQ)\tBidirectional\n";
+  *stream->GetStream() << "--------------------------------------------\n";
   
   for (const auto& neighbor : m_neighbors) {
-    *stream->GetStream() << neighbor.first << "\t\t"
-                        << (int)neighbor.second.tq << "\t"
-                        << (neighbor.second.isBidirectional ? "Yes" : "No") << "\t\t"
-                        << neighbor.second.interface << "\t\t"
-                        << (Simulator::Now() - neighbor.second.lastSeen).As(unit) << " ago\n";
-  }
-  
-  *stream->GetStream() << "\nRoute Cache:\n";
-  *stream->GetStream() << "Destination\t\tNext Hop\t\tMetric\tInterface\tLast Update\n";
-  *stream->GetStream() << "------------------------------------------------------------\n";
-  
-  for (const auto& route : m_routeCache) {
-    *stream->GetStream() << route.first << "\t\t"
-                        << route.second.nextHop << "\t\t"
-                        << (int)route.second.metric << "\t"
-                        << route.second.interface << "\t\t"
-                        << (Simulator::Now() - route.second.lastUpdate).As(unit) << " ago\n";
+    // Only show if not already in originators table
+    if (m_originators.find(neighbor.first) == m_originators.end()) {
+      *stream->GetStream() << neighbor.first << "\t\t"
+                          << (int)neighbor.second.tq << "\t\t"
+                          << (neighbor.second.isBidirectional ? 1 : 0) << "\n";
+    }
   }
   
   *stream->GetStream() << "\n";
