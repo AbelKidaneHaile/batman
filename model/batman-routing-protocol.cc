@@ -203,7 +203,7 @@ BatmanRoutingProtocol::SendBatmanPacket()
   BatmanPacket batmanPacket;
   batmanPacket.SetOriginator(iface.GetLocal());
   batmanPacket.SetPrevSender(iface.GetLocal());
-  batmanPacket.SetTQ(255); // Maximum quality for own packets
+  batmanPacket.SetTQ(100); // Maximum quality for own packets 255
   batmanPacket.SetSeqNum(++m_seqNum);
   batmanPacket.SetTTL(m_maxTTL);
   
