@@ -342,42 +342,88 @@ void BatmanRoutingProtocol::RecvBatman(Ptr<Socket> socket)
     return;
   }
   
-  // Check if this is a newer sequence number
+  // Check if this is a newer sequence number or better route
   bool isNewer = (m_originators.find(originator) == m_originators.end()) ||
                  IsNewerSequence(batmanPacket.GetSeqNum(), m_originators[originator].lastSeqNum);
   
-  if (isNewer) {
+  if (isNewer || batmanPacket.GetSeqNum() == m_originators[originator].lastSeqNum) {
     uint8_t newTQ = CalculateTQ(sender, batmanPacket.GetTQ());
     
-    // Only update if TQ is better or this is the first entry
-    bool shouldUpdate = (m_originators.find(originator) == m_originators.end()) ||
-                       (newTQ > m_originators[originator].tq) ||
-                       IsNewerSequence(batmanPacket.GetSeqNum(), m_originators[originator].lastSeqNum);
+    // Decision criteria for route updates:
+    // 1. If this is a new destination, accept any route with TQ > 0
+    // 2. If newer sequence number, accept if TQ is reasonable (> 10)
+    // 3. If same sequence number, only accept if TQ is significantly better (+20)
+    // 4. For multi-hop scenarios, don't overly penalize longer paths with better TQ
+    
+    bool shouldUpdate = false;
+    bool isNewDestination = (m_originators.find(originator) == m_originators.end());
+    uint8_t currentTQ = 0;
+    
+    if (!isNewDestination) {
+      currentTQ = m_originators[originator].tq;
+    }
+    
+    if (isNewDestination) {
+      shouldUpdate = (newTQ > 10); // Accept new destinations with reasonable TQ
+      NS_LOG_DEBUG("New destination " << originator << " TQ=" << (int)newTQ);
+    } 
+    else if (IsNewerSequence(batmanPacket.GetSeqNum(), m_originators[originator].lastSeqNum)) {
+      shouldUpdate = (newTQ > 10); // Accept newer sequence with reasonable TQ
+      NS_LOG_DEBUG("Newer sequence for " << originator << " old_seq=" << m_originators[originator].lastSeqNum 
+                   << " new_seq=" << batmanPacket.GetSeqNum() << " TQ=" << (int)newTQ);
+    }
+    else if (batmanPacket.GetSeqNum() == m_originators[originator].lastSeqNum) {
+      // Same sequence number - only update if significantly better TQ
+      // This allows better multi-hop paths to replace poorer direct links
+      uint8_t oldHops = m_originators[originator].hopCount;
+      uint8_t newHops = m_maxTTL - batmanPacket.GetTTL() + 1;
+      
+      // For same sequence, prefer routes with better TQ, even if more hops
+      if (newTQ > currentTQ + 15) { // Significantly better TQ
+        shouldUpdate = true;
+        NS_LOG_DEBUG("Better route for " << originator << " current_TQ=" << (int)currentTQ 
+                     << " new_TQ=" << (int)newTQ << " current_hops=" << (int)oldHops 
+                     << " new_hops=" << (int)newHops);
+      }
+      // Also prefer shorter paths if TQ is comparable
+      else if (newHops < oldHops && newTQ >= currentTQ - 10) {
+        shouldUpdate = true;
+        NS_LOG_DEBUG("Shorter path for " << originator << " TQ=" << (int)newTQ 
+                     << " hops: " << (int)oldHops << " -> " << (int)newHops);
+      }
+    }
     
     if (shouldUpdate && newTQ > 0) {
-      // Check if sender is a bidirectional neighbor for direct routes
-      bool senderIsBidirectional = true;
+      // Check if sender is a reachable neighbor
+      bool senderIsReachable = true;
       if (m_enableBidirectionalCheck && sender == batmanPacket.GetPrevSender()) {
         auto neighborIt = m_neighbors.find(sender);
         if (neighborIt != m_neighbors.end()) {
-          senderIsBidirectional = neighborIt->second.isBidirectional;
+          senderIsReachable = neighborIt->second.isBidirectional || 
+                             (neighborIt->second.tq > 30); // Allow if decent link quality
         }
       }
       
-      if (senderIsBidirectional) {
+      if (senderIsReachable) {
+        uint8_t newHopCount = m_maxTTL - batmanPacket.GetTTL() + 1;
+        
         m_originators[originator].originator = originator;
         m_originators[originator].nextHop = sender;
         m_originators[originator].tq = newTQ;
         m_originators[originator].lastSeqNum = batmanPacket.GetSeqNum();
         m_originators[originator].lastUpdate = Simulator::Now();
         m_originators[originator].interface = incomingInterface;
-        m_originators[originator].hopCount = m_maxTTL - batmanPacket.GetTTL() + 1;
+        m_originators[originator].hopCount = newHopCount;
         
-        UpdateRoute(originator, sender, incomingInterface, m_originators[originator].hopCount);
+        UpdateRoute(originator, sender, incomingInterface, newHopCount);
         
-        NS_LOG_DEBUG("Updated originator " << originator << " via " << sender 
-                     << " TQ=" << (int)newTQ << " Hops=" << (int)m_originators[originator].hopCount);
+        NS_LOG_INFO("Updated route to " << originator << " via " << sender 
+                   << " TQ=" << (int)newTQ << " Hops=" << (int)newHopCount
+                   << " (was: " << (isNewDestination ? "new" : std::to_string((int)currentTQ)) << ")");
       }
+    } else if (newTQ > 0) {
+      NS_LOG_DEBUG("Route to " << originator << " not updated: current_TQ=" 
+                   << (int)currentTQ << " new_TQ=" << (int)newTQ);
     }
   }
   
