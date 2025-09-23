@@ -13,6 +13,7 @@
 #include "ns3/ipv4-static-routing-helper.h"
 #include "ns3/ipv4-static-routing.h"
 #include <algorithm>
+#include <iomanip>
 
 namespace ns3 {
 
@@ -20,6 +21,19 @@ NS_LOG_COMPONENT_DEFINE("BatmanRoutingProtocol");
 NS_OBJECT_ENSURE_REGISTERED(BatmanRoutingProtocol);
 
 const uint32_t BATMAN_PORT = 4305;
+
+// Define RouteInfo struct here since it's not in header
+struct RouteInfo {
+  Ipv4Address destination;
+  Ipv4Address nextHop;
+  uint8_t tq;
+  bool isBidirectional;
+  uint8_t hopCount;
+  bool isFromOriginators;
+  std::string routeType;
+  
+  RouteInfo() : tq(0), isBidirectional(false), hopCount(0), isFromOriginators(false) {}
+};
 
 TypeId
 BatmanRoutingProtocol::GetTypeId()
@@ -1082,49 +1096,102 @@ BatmanRoutingProtocol::PrintRoutingTable(Ptr<OutputStreamWrapper> stream, Time::
   NS_LOG_FUNCTION(this << stream);
   
   *stream->GetStream() << "Batman Routing Table at " << Simulator::Now().As(unit) << ":\n";
-  *stream->GetStream() << "Destination\t\tNext Hop\t\tMetric(TQ)\tBidirectional\n";
-  *stream->GetStream() << "----------------------------------------------------------------\n";
+  *stream->GetStream() << std::left << std::setw(15) << "Destination" 
+                      << std::setw(15) << "Next Hop" 
+                      << std::setw(12) << "Metric(TQ)" 
+                      << std::setw(15) << "Bidirectional"
+                      << std::setw(8) << "Hops"
+                      << "Type\n";
+  *stream->GetStream() << "--------------------------------------------------------------------------------\n";
   
+  // Create a map to collect all routing information
+  std::map<Ipv4Address, RouteInfo> allRoutes;
+  
+  // Add routes from originators table (both direct and multi-hop)
   for (const auto& entry : m_originators) {
-    // For bidirectional status, check the actual destination if it's a direct route,
-    // otherwise check the next hop
-    int bidirectional = 0;
+    RouteInfo info;
+    info.destination = entry.first;
+    info.nextHop = entry.second.nextHop;
+    info.tq = entry.second.tq;
+    info.hopCount = entry.second.hopCount;
+    info.isFromOriginators = true;
     
+    // Determine bidirectional status
     if (entry.first == entry.second.nextHop) {
       // Direct route - check if destination is bidirectional
       auto neighborIt = m_neighbors.find(entry.first);
       if (neighborIt != m_neighbors.end()) {
-        bidirectional = neighborIt->second.isBidirectional ? 1 : 0;
+        info.isBidirectional = neighborIt->second.isBidirectional;
+        // Use the actual neighbor TQ if available (more accurate)
+        if (neighborIt->second.tq > 0) {
+          info.tq = neighborIt->second.tq;
+        }
+      } else {
+        info.isBidirectional = false;
       }
+      info.routeType = "Direct";
     } else {
       // Multi-hop route - check if next hop is bidirectional
       auto neighborIt = m_neighbors.find(entry.second.nextHop);
       if (neighborIt != m_neighbors.end()) {
-        bidirectional = neighborIt->second.isBidirectional ? 1 : 0;
+        info.isBidirectional = neighborIt->second.isBidirectional;
+      } else {
+        info.isBidirectional = false;
       }
+      info.routeType = "Multi-hop";
     }
     
-    *stream->GetStream() << entry.first << "\t\t"
-                        << entry.second.nextHop << "\t\t"
-                        << (int)entry.second.tq << "\t\t"
-                        << bidirectional << "\n";
+    allRoutes[entry.first] = info;
   }
   
-  // Also show direct neighbors that might not be in originators table
-  *stream->GetStream() << "\nDirect Neighbors (not in routing table):\n";
-  *stream->GetStream() << "Neighbor\t\tMetric(TQ)\tBidirectional\n";
-  *stream->GetStream() << "--------------------------------------------\n";
-  
+  // Add direct neighbors that are not in originators table
   for (const auto& neighbor : m_neighbors) {
-    // Only show if not already in originators table
-    if (m_originators.find(neighbor.first) == m_originators.end()) {
-      *stream->GetStream() << neighbor.first << "\t\t"
-                          << (int)neighbor.second.tq << "\t\t"
-                          << (neighbor.second.isBidirectional ? 1 : 0) << "\n";
+    if (allRoutes.find(neighbor.first) == allRoutes.end()) {
+      RouteInfo info;
+      info.destination = neighbor.first;
+      info.nextHop = neighbor.first; // Direct neighbor
+      info.tq = neighbor.second.tq;
+      info.isBidirectional = neighbor.second.isBidirectional;
+      info.hopCount = 1;
+      info.isFromOriginators = false;
+      info.routeType = "Direct";
+      
+      allRoutes[neighbor.first] = info;
     }
   }
   
-  *stream->GetStream() << "\n";
+  // Print all routes sorted by destination IP
+  for (const auto& route : allRoutes) {
+    const RouteInfo& info = route.second;
+    
+    *stream->GetStream() << std::left << std::setw(15) << info.destination
+                        << std::setw(15) << info.nextHop
+                        << std::setw(12) << (int)info.tq
+                        << std::setw(15) << (info.isBidirectional ? "Yes" : "No")
+                        << std::setw(8) << (int)info.hopCount
+                        << info.routeType << "\n";
+  }
+  
+  // Print summary statistics
+  int totalRoutes = allRoutes.size();
+  int bidirectionalRoutes = 0;
+  int directRoutes = 0;
+  int multihopRoutes = 0;
+  int validTQRoutes = 0;
+  
+  for (const auto& route : allRoutes) {
+    const RouteInfo& info = route.second;
+    if (info.isBidirectional) bidirectionalRoutes++;
+    if (info.routeType == "Direct") directRoutes++;
+    if (info.routeType == "Multi-hop") multihopRoutes++;
+    if (info.tq > 0) validTQRoutes++;
+  }
+  
+  *stream->GetStream() << "--------------------------------------------------------------------------------\n";
+  *stream->GetStream() << "Summary: " << totalRoutes << " total routes ("
+                      << directRoutes << " direct, " << multihopRoutes << " multi-hop), "
+                      << bidirectionalRoutes << " bidirectional, "
+                      << validTQRoutes << " with valid TQ\n\n";
 }
 
 uint32_t
