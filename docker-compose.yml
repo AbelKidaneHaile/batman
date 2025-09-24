@@ -5,6 +5,6 @@ services:
     working_dir: /home/ns3dce/dce-linux-dev/source/ns-3-dev
     volumes:
       - .:/home/ns3dce/dce-linux-dev/source/ns-3-dev/src/batman
-    stdin_open: true   # same as -i
-    tty: true          # same as -t
+    stdin_open: true  
+    tty: true          
     command: ["/bin/bash"]

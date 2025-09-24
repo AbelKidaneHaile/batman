@@ -217,7 +217,7 @@ BatmanRoutingProtocol::SendBatmanPacket()
   BatmanPacket batmanPacket;
   batmanPacket.SetOriginator(iface.GetLocal());
   batmanPacket.SetPrevSender(iface.GetLocal());
-  batmanPacket.SetTQ(100); // Maximum quality for own packets 255
+  batmanPacket.SetTQ(255); // Maximum quality for own packets 255
   batmanPacket.SetSeqNum(++m_seqNum);
   batmanPacket.SetTTL(m_maxTTL);
   
@@ -1090,109 +1090,232 @@ BatmanRoutingProtocol::NotifyRemoveAddress(uint32_t interface, Ipv4InterfaceAddr
   // Address changes might require socket recreation, but we'll keep it simple
 }
 
+
+
+
+//------------------------------------------------------------------------------------------------------------------------------
+// void
+// BatmanRoutingProtocol::PrintRoutingTable(Ptr<OutputStreamWrapper> stream, Time::Unit unit) const
+// {
+//   NS_LOG_FUNCTION(this << stream);
+  
+//   *stream->GetStream() << "Batman Routing Table at " << Simulator::Now().As(unit) << ":\n";
+//   *stream->GetStream() << std::left << std::setw(15) << "Destination" 
+//                       << std::setw(15) << "Next Hop" 
+//                       << std::setw(12) << "Metric(TQ)" 
+//                       << std::setw(15) << "Bidirectional"
+//                       << std::setw(8) << "Hops"
+//                       << "Type\n";
+//   *stream->GetStream() << "--------------------------------------------------------------------------------\n";
+  
+//   // Create a map to collect all routing information
+//   std::map<Ipv4Address, RouteInfo> allRoutes;
+  
+//   // Add routes from originators table (both direct and multi-hop)
+//   for (const auto& entry : m_originators) {
+//     RouteInfo info;
+//     info.destination = entry.first;
+//     info.nextHop = entry.second.nextHop;
+//     info.tq = entry.second.tq;
+//     info.hopCount = entry.second.hopCount;
+//     info.isFromOriginators = true;
+    
+//     // Determine bidirectional status
+//     if (entry.first == entry.second.nextHop) {
+//       // Direct route - check if destination is bidirectional
+//       auto neighborIt = m_neighbors.find(entry.first);
+//       if (neighborIt != m_neighbors.end()) {
+//         info.isBidirectional = neighborIt->second.isBidirectional;
+//         // Use the actual neighbor TQ if available (more accurate)
+//         if (neighborIt->second.tq > 0) {
+//           info.tq = neighborIt->second.tq;
+//         }
+//       } else {
+//         info.isBidirectional = false;
+//       }
+//       info.routeType = "Direct";
+//     } else {
+//       // Multi-hop route - check if next hop is bidirectional
+//       auto neighborIt = m_neighbors.find(entry.second.nextHop);
+//       if (neighborIt != m_neighbors.end()) {
+//         info.isBidirectional = neighborIt->second.isBidirectional;
+//       } else {
+//         info.isBidirectional = false;
+//       }
+//       info.routeType = "Multi-hop";
+//     }
+    
+//     allRoutes[entry.first] = info;
+//   }
+  
+//   // Add direct neighbors that are not in originators table
+//   for (const auto& neighbor : m_neighbors) {
+//     if (allRoutes.find(neighbor.first) == allRoutes.end()) {
+//       RouteInfo info;
+//       info.destination = neighbor.first;
+//       info.nextHop = neighbor.first; // Direct neighbor
+//       info.tq = neighbor.second.tq;
+//       info.isBidirectional = neighbor.second.isBidirectional;
+//       info.hopCount = 1;
+//       info.isFromOriginators = false;
+//       info.routeType = "Direct";
+      
+//       allRoutes[neighbor.first] = info;
+//     }
+//   }
+  
+//   // Print all routes sorted by destination IP
+//   for (const auto& route : allRoutes) {
+//     const RouteInfo& info = route.second;
+    
+//     *stream->GetStream() << std::left << std::setw(15) << info.destination
+//                         << std::setw(15) << info.nextHop
+//                         << std::setw(12) << (int)info.tq
+//                         << std::setw(15) << (info.isBidirectional ? "Yes" : "No")
+//                         << std::setw(8) << (int)info.hopCount
+//                         << info.routeType << "\n";
+//   }
+  
+//   // Print summary statistics
+//   int totalRoutes = allRoutes.size();
+//   int bidirectionalRoutes = 0;
+//   int directRoutes = 0;
+//   int multihopRoutes = 0;
+//   int validTQRoutes = 0;
+  
+//   for (const auto& route : allRoutes) {
+//     const RouteInfo& info = route.second;
+//     if (info.isBidirectional) bidirectionalRoutes++;
+//     if (info.routeType == "Direct") directRoutes++;
+//     if (info.routeType == "Multi-hop") multihopRoutes++;
+//     if (info.tq > 0) validTQRoutes++;
+//   }
+  
+//   *stream->GetStream() << "--------------------------------------------------------------------------------\n";
+//   *stream->GetStream() << "Summary: " << totalRoutes << " total routes ("
+//                       << directRoutes << " direct, " << multihopRoutes << " multi-hop), "
+//                       << bidirectionalRoutes << " bidirectional, "
+//                       << validTQRoutes << " with valid TQ\n\n";
+// }
+//------------------------------------------------------------------------------------------------------------------------------
+
+// Updated routing table print function that has the corrected format 
+
+
+
 void
 BatmanRoutingProtocol::PrintRoutingTable(Ptr<OutputStreamWrapper> stream, Time::Unit unit) const
 {
-  NS_LOG_FUNCTION(this << stream);
-  
-  *stream->GetStream() << "Batman Routing Table at " << Simulator::Now().As(unit) << ":\n";
-  *stream->GetStream() << std::left << std::setw(15) << "Destination" 
-                      << std::setw(15) << "Next Hop" 
-                      << std::setw(12) << "Metric(TQ)" 
-                      << std::setw(15) << "Bidirectional"
-                      << std::setw(8) << "Hops"
-                      << "Type\n";
-  *stream->GetStream() << "--------------------------------------------------------------------------------\n";
-  
-  // Create a map to collect all routing information
-  std::map<Ipv4Address, RouteInfo> allRoutes;
-  
-  // Add routes from originators table (both direct and multi-hop)
-  for (const auto& entry : m_originators) {
-    RouteInfo info;
-    info.destination = entry.first;
-    info.nextHop = entry.second.nextHop;
-    info.tq = entry.second.tq;
-    info.hopCount = entry.second.hopCount;
-    info.isFromOriginators = true;
-    
-    // Determine bidirectional status
-    if (entry.first == entry.second.nextHop) {
-      // Direct route - check if destination is bidirectional
-      auto neighborIt = m_neighbors.find(entry.first);
-      if (neighborIt != m_neighbors.end()) {
-        info.isBidirectional = neighborIt->second.isBidirectional;
-        // Use the actual neighbor TQ if available (more accurate)
-        if (neighborIt->second.tq > 0) {
-          info.tq = neighborIt->second.tq;
+    NS_LOG_FUNCTION(this << stream);
+
+    *stream->GetStream() << "Batman Routing Table at " << Simulator::Now().As(unit) << ":\n";
+    *stream->GetStream() << std::left 
+                         << std::setw(15) << "Destination" 
+                         << std::setw(18) << "Next Hop" 
+                         << std::setw(12) << "Metric(TQ)" 
+                         << std::setw(15) << "Bidirectional" 
+                         << std::setw(6)  << "Hops" 
+                         << "Type\n";
+    *stream->GetStream() << "--------------------------------------------------------------------------------\n";
+
+    // Create a map to collect all routing information
+    std::map<Ipv4Address, RouteInfo> allRoutes;
+
+    // Add routes from originators table (both direct and multi-hop)
+    for (const auto& entry : m_originators) {
+        RouteInfo info;
+        info.destination = entry.first;
+        info.nextHop = entry.second.nextHop;
+        info.tq = entry.second.tq;
+        info.hopCount = entry.second.hopCount;
+        info.isFromOriginators = true;
+
+        // Determine bidirectional status
+        if (entry.first == entry.second.nextHop) {
+            auto neighborIt = m_neighbors.find(entry.first);
+            if (neighborIt != m_neighbors.end()) {
+                info.isBidirectional = neighborIt->second.isBidirectional;
+                if (neighborIt->second.tq > 0) {
+                    info.tq = neighborIt->second.tq;
+                }
+            } else {
+                info.isBidirectional = false;
+            }
+            info.routeType = "Direct";
+        } else {
+            auto neighborIt = m_neighbors.find(entry.second.nextHop);
+            if (neighborIt != m_neighbors.end()) {
+                info.isBidirectional = neighborIt->second.isBidirectional;
+            } else {
+                info.isBidirectional = false;
+            }
+            info.routeType = "Multi-hop";
         }
-      } else {
-        info.isBidirectional = false;
-      }
-      info.routeType = "Direct";
-    } else {
-      // Multi-hop route - check if next hop is bidirectional
-      auto neighborIt = m_neighbors.find(entry.second.nextHop);
-      if (neighborIt != m_neighbors.end()) {
-        info.isBidirectional = neighborIt->second.isBidirectional;
-      } else {
-        info.isBidirectional = false;
-      }
-      info.routeType = "Multi-hop";
+
+        allRoutes[entry.first] = info;
     }
-    
-    allRoutes[entry.first] = info;
-  }
-  
-  // Add direct neighbors that are not in originators table
-  for (const auto& neighbor : m_neighbors) {
-    if (allRoutes.find(neighbor.first) == allRoutes.end()) {
-      RouteInfo info;
-      info.destination = neighbor.first;
-      info.nextHop = neighbor.first; // Direct neighbor
-      info.tq = neighbor.second.tq;
-      info.isBidirectional = neighbor.second.isBidirectional;
-      info.hopCount = 1;
-      info.isFromOriginators = false;
-      info.routeType = "Direct";
-      
-      allRoutes[neighbor.first] = info;
+
+    // Add direct neighbors that are not in originators table
+    for (const auto& neighbor : m_neighbors) {
+        if (allRoutes.find(neighbor.first) == allRoutes.end()) {
+            RouteInfo info;
+            info.destination = neighbor.first;
+            info.nextHop = neighbor.first;
+            info.tq = neighbor.second.tq;
+            info.isBidirectional = neighbor.second.isBidirectional;
+            info.hopCount = 1;
+            info.isFromOriginators = false;
+            info.routeType = "Direct";
+
+            allRoutes[neighbor.first] = info;
+        }
     }
-  }
-  
-  // Print all routes sorted by destination IP
-  for (const auto& route : allRoutes) {
-    const RouteInfo& info = route.second;
-    
-    *stream->GetStream() << std::left << std::setw(15) << info.destination
-                        << std::setw(15) << info.nextHop
-                        << std::setw(12) << (int)info.tq
-                        << std::setw(15) << (info.isBidirectional ? "Yes" : "No")
-                        << std::setw(8) << (int)info.hopCount
-                        << info.routeType << "\n";
-  }
-  
-  // Print summary statistics
-  int totalRoutes = allRoutes.size();
-  int bidirectionalRoutes = 0;
-  int directRoutes = 0;
-  int multihopRoutes = 0;
-  int validTQRoutes = 0;
-  
-  for (const auto& route : allRoutes) {
-    const RouteInfo& info = route.second;
-    if (info.isBidirectional) bidirectionalRoutes++;
-    if (info.routeType == "Direct") directRoutes++;
-    if (info.routeType == "Multi-hop") multihopRoutes++;
-    if (info.tq > 0) validTQRoutes++;
-  }
-  
-  *stream->GetStream() << "--------------------------------------------------------------------------------\n";
-  *stream->GetStream() << "Summary: " << totalRoutes << " total routes ("
-                      << directRoutes << " direct, " << multihopRoutes << " multi-hop), "
-                      << bidirectionalRoutes << " bidirectional, "
-                      << validTQRoutes << " with valid TQ\n\n";
+
+    // Print all routes sorted by destination IP
+    for (const auto& route : allRoutes) {
+        const RouteInfo& info = route.second;
+
+        *stream->GetStream() << std::left 
+                             << info.destination << "\t"
+                             << "\t" << info.nextHop << "\t" << "\t" << "\t"
+                             << std::setw(12) << (int)info.tq
+                             << std::setw(15) << (info.isBidirectional ? "Yes" : "No")
+                             << std::setw(6)  << (int)info.hopCount
+                             << info.routeType << "\n";
+    }
+
+    // Print summary statistics
+    int totalRoutes = allRoutes.size();
+    int bidirectionalRoutes = 0;
+    int directRoutes = 0;
+    int multihopRoutes = 0;
+    int validTQRoutes = 0;
+
+    for (const auto& route : allRoutes) {
+        const RouteInfo& info = route.second;
+        if (info.isBidirectional) bidirectionalRoutes++;
+        if (info.routeType == "Direct") directRoutes++;
+        if (info.routeType == "Multi-hop") multihopRoutes++;
+        if (info.tq > 0) validTQRoutes++;
+    }
+
+    *stream->GetStream() << "--------------------------------------------------------------------------------\n";
+    *stream->GetStream() << "Summary: " << totalRoutes << " total routes ("
+                         << directRoutes << " direct, " << multihopRoutes << " multi-hop), "
+                         << bidirectionalRoutes << " bidirectional, "
+                         << validTQRoutes << " with valid TQ\n\n";
 }
+
+
+
+
+
+
+
+
+
+
+
 
 uint32_t
 BatmanRoutingProtocol::GetInterfaceForSocket(Ptr<Socket> socket) const
