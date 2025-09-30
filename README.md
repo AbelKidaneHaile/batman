@@ -1,10 +1,11 @@
 # B.A.T.M.A.N 
-## Better Approach to Mobile Ad-hoc Networking
+## Better Approach to Mobile Ad-hoc Networking (non-official)
 <p align="center"> 
      <a  href="https://hub.docker.com/r/abelkidane/ns3-dce" ><img alt="Static Badge" src="https://img.shields.io/badge/docker-abelkidane%2Freports-blue?logo=docker" target="_blank">    
 </p>
 
-Simple simulation code for simulating the batman protocol in ns-3. 
+Simple simulation code for simulating the batman protocol in ns-3.
+(N.B. This repo contains a from-scratch Batman protocol implementation and is not recommended for use. Please use the official release instead.)
 
 ## Prerequisite 
 Install Docker in your PC by following the installation instructions from [Docker](https://docs.docker.com/engine/install/)
