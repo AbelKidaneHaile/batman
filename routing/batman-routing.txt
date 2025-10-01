@@ -1,0 +1,336 @@
+Batman Routing Table at +10.0s:
+Destination    Next Hop          Metric(TQ)  Bidirectional  Hops  Type
+--------------------------------------------------------------------------------
+10.1.1.2		10.1.1.2			127         Yes            1     Direct
+10.1.1.3		10.1.1.3			0           No             1     Direct
+10.1.1.4		10.1.1.4			0           No             1     Direct
+10.1.1.5		10.1.1.5			0           No             1     Direct
+10.1.1.6		10.1.1.6			200         Yes            1     Direct
+10.1.1.7		10.1.1.7			0           No             1     Direct
+10.1.1.8		10.1.1.8			0           No             1     Direct
+10.1.1.9		10.1.1.9			0           No             1     Direct
+10.1.1.10		10.1.1.10			0           No             1     Direct
+10.1.1.11		10.1.1.11			0           No             1     Direct
+10.1.1.12		10.1.1.12			0           No             1     Direct
+10.1.1.13		10.1.1.13			0           No             1     Direct
+10.1.1.14		10.1.1.14			0           No             1     Direct
+10.1.1.15		10.1.1.15			0           No             1     Direct
+10.1.1.16		10.1.1.16			0           No             1     Direct
+--------------------------------------------------------------------------------
+Summary: 15 total routes (15 direct, 0 multi-hop), 2 bidirectional, 2 with valid TQ
+
+Batman Routing Table at +10.0s:
+Destination    Next Hop          Metric(TQ)  Bidirectional  Hops  Type
+--------------------------------------------------------------------------------
+10.1.1.1		10.1.1.1			127         Yes            1     Direct
+10.1.1.3		10.1.1.3			112         Yes            1     Direct
+10.1.1.4		10.1.1.4			0           No             1     Direct
+10.1.1.5		10.1.1.5			0           No             1     Direct
+10.1.1.6		10.1.1.6			0           No             1     Direct
+10.1.1.7		10.1.1.7			176         Yes            1     Direct
+10.1.1.8		10.1.1.8			0           No             1     Direct
+10.1.1.9		10.1.1.9			0           No             1     Direct
+10.1.1.10		10.1.1.10			0           No             1     Direct
+10.1.1.11		10.1.1.11			0           No             1     Direct
+10.1.1.12		10.1.1.12			0           No             1     Direct
+10.1.1.13		10.1.1.13			0           No             1     Direct
+10.1.1.14		10.1.1.14			0           No             1     Direct
+10.1.1.15		10.1.1.15			0           No             1     Direct
+10.1.1.16		10.1.1.16			0           No             1     Direct
+--------------------------------------------------------------------------------
+Summary: 15 total routes (15 direct, 0 multi-hop), 3 bidirectional, 3 with valid TQ
+
+Batman Routing Table at +10.0s:
+Destination    Next Hop          Metric(TQ)  Bidirectional  Hops  Type
+--------------------------------------------------------------------------------
+10.1.1.1		10.1.1.1			0           No             1     Direct
+10.1.1.2		10.1.1.2			112         Yes            1     Direct
+10.1.1.4		10.1.1.4			127         Yes            1     Direct
+10.1.1.5		10.1.1.5			0           No             1     Direct
+10.1.1.6		10.1.1.6			0           No             1     Direct
+10.1.1.7		10.1.1.7			0           No             1     Direct
+10.1.1.8		10.1.1.8			127         Yes            1     Direct
+10.1.1.9		10.1.1.9			0           No             1     Direct
+10.1.1.10		10.1.1.10			0           No             1     Direct
+10.1.1.11		10.1.1.11			0           No             1     Direct
+10.1.1.12		10.1.1.12			0           No             1     Direct
+10.1.1.13		10.1.1.13			0           No             1     Direct
+10.1.1.14		10.1.1.14			0           No             1     Direct
+10.1.1.15		10.1.1.15			0           No             1     Direct
+10.1.1.16		10.1.1.16			0           No             1     Direct
+--------------------------------------------------------------------------------
+Summary: 15 total routes (15 direct, 0 multi-hop), 3 bidirectional, 3 with valid TQ
+
+Batman Routing Table at +10.0s:
+Destination    Next Hop          Metric(TQ)  Bidirectional  Hops  Type
+--------------------------------------------------------------------------------
+10.1.1.1		10.1.1.1			0           No             1     Direct
+10.1.1.2		10.1.1.2			0           No             1     Direct
+10.1.1.3		10.1.1.3			127         Yes            1     Direct
+10.1.1.5		10.1.1.5			127         Yes            1     Direct
+10.1.1.6		10.1.1.6			0           No             1     Direct
+10.1.1.7		10.1.1.7			0           No             1     Direct
+10.1.1.8		10.1.1.8			0           No             1     Direct
+10.1.1.9		10.1.1.9			176         Yes            1     Direct
+10.1.1.10		10.1.1.10			0           No             1     Direct
+10.1.1.11		10.1.1.11			0           No             1     Direct
+10.1.1.12		10.1.1.12			0           No             1     Direct
+10.1.1.13		10.1.1.13			0           No             1     Direct
+10.1.1.14		10.1.1.14			0           No             1     Direct
+10.1.1.15		10.1.1.15			0           No             1     Direct
+10.1.1.16		10.1.1.16			0           No             1     Direct
+--------------------------------------------------------------------------------
+Summary: 15 total routes (15 direct, 0 multi-hop), 3 bidirectional, 3 with valid TQ
+
+Batman Routing Table at +10.0s:
+Destination    Next Hop          Metric(TQ)  Bidirectional  Hops  Type
+--------------------------------------------------------------------------------
+10.1.1.1		10.1.1.1			0           No             1     Direct
+10.1.1.2		10.1.1.2			0           No             1     Direct
+10.1.1.3		10.1.1.3			0           No             1     Direct
+10.1.1.4		10.1.1.4			176         Yes            1     Direct
+10.1.1.6		10.1.1.6			0           No             1     Direct
+10.1.1.7		10.1.1.7			0           No             1     Direct
+10.1.1.8		10.1.1.8			0           No             1     Direct
+10.1.1.9		10.1.1.9			0           No             1     Direct
+10.1.1.10		10.1.1.10			176         Yes            1     Direct
+10.1.1.11		10.1.1.11			0           No             1     Direct
+10.1.1.12		10.1.1.12			0           No             1     Direct
+10.1.1.13		10.1.1.13			0           No             1     Direct
+10.1.1.14		10.1.1.14			0           No             1     Direct
+10.1.1.15		10.1.1.15			0           No             1     Direct
+10.1.1.16		10.1.1.16			0           No             1     Direct
+--------------------------------------------------------------------------------
+Summary: 15 total routes (15 direct, 0 multi-hop), 2 bidirectional, 2 with valid TQ
+
+Batman Routing Table at +10.0s:
+Destination    Next Hop          Metric(TQ)  Bidirectional  Hops  Type
+--------------------------------------------------------------------------------
+10.1.1.1		10.1.1.1			200         Yes            1     Direct
+10.1.1.2		10.1.1.2			0           No             1     Direct
+10.1.1.3		10.1.1.3			0           No             1     Direct
+10.1.1.4		10.1.1.4			0           No             1     Direct
+10.1.1.5		10.1.1.5			0           No             1     Direct
+10.1.1.7		10.1.1.7			112         Yes            1     Direct
+10.1.1.8		10.1.1.8			0           No             1     Direct
+10.1.1.9		10.1.1.9			0           No             1     Direct
+10.1.1.10		10.1.1.10			0           No             1     Direct
+10.1.1.11		10.1.1.11			127         Yes            1     Direct
+10.1.1.12		10.1.1.12			0           No             1     Direct
+10.1.1.13		10.1.1.13			0           No             1     Direct
+10.1.1.14		10.1.1.14			0           No             1     Direct
+10.1.1.15		10.1.1.15			0           No             1     Direct
+10.1.1.16		10.1.1.16			0           No             1     Direct
+--------------------------------------------------------------------------------
+Summary: 15 total routes (15 direct, 0 multi-hop), 3 bidirectional, 3 with valid TQ
+
+Batman Routing Table at +10.0s:
+Destination    Next Hop          Metric(TQ)  Bidirectional  Hops  Type
+--------------------------------------------------------------------------------
+10.1.1.1		10.1.1.1			0           No             1     Direct
+10.1.1.2		10.1.1.2			200         Yes            1     Direct
+10.1.1.3		10.1.1.3			0           No             1     Direct
+10.1.1.4		10.1.1.4			0           No             1     Direct
+10.1.1.5		10.1.1.5			0           No             1     Direct
+10.1.1.6		10.1.1.6			127         Yes            1     Direct
+10.1.1.8		10.1.1.8			112         Yes            1     Direct
+10.1.1.9		10.1.1.9			0           No             1     Direct
+10.1.1.10		10.1.1.10			0           No             1     Direct
+10.1.1.11		10.1.1.11			0           No             1     Direct
+10.1.1.12		10.1.1.12			127         Yes            1     Direct
+10.1.1.13		10.1.1.13			0           No             1     Direct
+10.1.1.14		10.1.1.14			0           No             1     Direct
+10.1.1.15		10.1.1.15			0           No             1     Direct
+10.1.1.16		10.1.1.16			0           No             1     Direct
+--------------------------------------------------------------------------------
+Summary: 15 total routes (15 direct, 0 multi-hop), 4 bidirectional, 4 with valid TQ
+
+Batman Routing Table at +10.0s:
+Destination    Next Hop          Metric(TQ)  Bidirectional  Hops  Type
+--------------------------------------------------------------------------------
+10.1.1.1		10.1.1.1			0           No             1     Direct
+10.1.1.2		10.1.1.2			0           No             1     Direct
+10.1.1.3		10.1.1.3			127         Yes            1     Direct
+10.1.1.4		10.1.1.4			0           No             1     Direct
+10.1.1.5		10.1.1.5			0           No             1     Direct
+10.1.1.6		10.1.1.6			0           No             1     Direct
+10.1.1.7		10.1.1.7			0           Yes            1     Direct
+10.1.1.9		10.1.1.9			0           No             1     Direct
+10.1.1.10		10.1.1.10			0           No             1     Direct
+10.1.1.11		10.1.1.11			0           No             1     Direct
+10.1.1.12		10.1.1.12			0           No             1     Direct
+10.1.1.13		10.1.1.13			0           No             1     Direct
+10.1.1.14		10.1.1.14			0           No             1     Direct
+10.1.1.15		10.1.1.15			0           No             1     Direct
+10.1.1.16		10.1.1.16			0           No             1     Direct
+--------------------------------------------------------------------------------
+Summary: 15 total routes (15 direct, 0 multi-hop), 2 bidirectional, 1 with valid TQ
+
+Batman Routing Table at +10.0s:
+Destination    Next Hop          Metric(TQ)  Bidirectional  Hops  Type
+--------------------------------------------------------------------------------
+10.1.1.1		10.1.1.1			0           No             1     Direct
+10.1.1.2		10.1.1.2			0           No             1     Direct
+10.1.1.3		10.1.1.3			0           No             1     Direct
+10.1.1.4		10.1.1.4			112         Yes            1     Direct
+10.1.1.5		10.1.1.5			0           No             1     Direct
+10.1.1.6		10.1.1.6			0           No             1     Direct
+10.1.1.7		10.1.1.7			0           No             1     Direct
+10.1.1.8		10.1.1.8			0           No             1     Direct
+10.1.1.10		10.1.1.10			127         Yes            1     Direct
+10.1.1.11		10.1.1.11			0           No             1     Direct
+10.1.1.12		10.1.1.12			0           No             1     Direct
+10.1.1.13		10.1.1.13			0           No             1     Direct
+10.1.1.14		10.1.1.14			112         Yes            1     Direct
+10.1.1.15		10.1.1.15			0           No             1     Direct
+10.1.1.16		10.1.1.16			0           No             1     Direct
+--------------------------------------------------------------------------------
+Summary: 15 total routes (15 direct, 0 multi-hop), 3 bidirectional, 3 with valid TQ
+
+Batman Routing Table at +10.0s:
+Destination    Next Hop          Metric(TQ)  Bidirectional  Hops  Type
+--------------------------------------------------------------------------------
+10.1.1.1		10.1.1.1			0           No             1     Direct
+10.1.1.2		10.1.1.2			0           No             1     Direct
+10.1.1.3		10.1.1.3			0           No             1     Direct
+10.1.1.4		10.1.1.4			0           No             1     Direct
+10.1.1.5		10.1.1.5			112         Yes            1     Direct
+10.1.1.6		10.1.1.6			0           No             1     Direct
+10.1.1.7		10.1.1.7			0           No             1     Direct
+10.1.1.8		10.1.1.8			0           No             1     Direct
+10.1.1.9		10.1.1.9			127         Yes            1     Direct
+10.1.1.11		10.1.1.11			0           No             1     Direct
+10.1.1.12		10.1.1.12			0           No             1     Direct
+10.1.1.13		10.1.1.13			0           No             1     Direct
+10.1.1.14		10.1.1.14			0           No             1     Direct
+10.1.1.15		10.1.1.15			176         Yes            1     Direct
+10.1.1.16		10.1.1.16			0           No             1     Direct
+--------------------------------------------------------------------------------
+Summary: 15 total routes (15 direct, 0 multi-hop), 3 bidirectional, 3 with valid TQ
+
+Batman Routing Table at +10.0s:
+Destination    Next Hop          Metric(TQ)  Bidirectional  Hops  Type
+--------------------------------------------------------------------------------
+10.1.1.1		10.1.1.1			0           No             1     Direct
+10.1.1.2		10.1.1.2			0           No             1     Direct
+10.1.1.3		10.1.1.3			0           No             1     Direct
+10.1.1.4		10.1.1.4			0           No             1     Direct
+10.1.1.5		10.1.1.5			0           No             1     Direct
+10.1.1.6		10.1.1.6			200         Yes            1     Direct
+10.1.1.7		10.1.1.7			0           No             1     Direct
+10.1.1.8		10.1.1.8			0           No             1     Direct
+10.1.1.9		10.1.1.9			0           No             1     Direct
+10.1.1.10		10.1.1.10			0           No             1     Direct
+10.1.1.12		10.1.1.12			0           Yes            1     Direct
+10.1.1.13		10.1.1.13			0           No             1     Direct
+10.1.1.14		10.1.1.14			0           No             1     Direct
+10.1.1.15		10.1.1.15			0           No             1     Direct
+10.1.1.16		10.1.1.16			127         Yes            1     Direct
+--------------------------------------------------------------------------------
+Summary: 15 total routes (15 direct, 0 multi-hop), 3 bidirectional, 2 with valid TQ
+
+Batman Routing Table at +10.0s:
+Destination    Next Hop          Metric(TQ)  Bidirectional  Hops  Type
+--------------------------------------------------------------------------------
+10.1.1.1		10.1.1.1			0           No             1     Direct
+10.1.1.2		10.1.1.2			0           No             1     Direct
+10.1.1.3		10.1.1.3			0           No             1     Direct
+10.1.1.4		10.1.1.4			0           No             1     Direct
+10.1.1.5		10.1.1.5			0           No             1     Direct
+10.1.1.6		10.1.1.6			0           No             1     Direct
+10.1.1.7		10.1.1.7			127         Yes            1     Direct
+10.1.1.8		10.1.1.8			0           No             1     Direct
+10.1.1.9		10.1.1.9			0           No             1     Direct
+10.1.1.10		10.1.1.10			0           No             1     Direct
+10.1.1.11		10.1.1.11			112         Yes            1     Direct
+10.1.1.13		10.1.1.13			127         Yes            1     Direct
+10.1.1.14		10.1.1.14			0           No             1     Direct
+10.1.1.15		10.1.1.15			0           No             1     Direct
+10.1.1.16		10.1.1.16			0           No             1     Direct
+--------------------------------------------------------------------------------
+Summary: 15 total routes (15 direct, 0 multi-hop), 3 bidirectional, 3 with valid TQ
+
+Batman Routing Table at +10.0s:
+Destination    Next Hop          Metric(TQ)  Bidirectional  Hops  Type
+--------------------------------------------------------------------------------
+10.1.1.1		10.1.1.1			0           No             1     Direct
+10.1.1.2		10.1.1.2			0           No             1     Direct
+10.1.1.3		10.1.1.3			0           No             1     Direct
+10.1.1.4		10.1.1.4			0           No             1     Direct
+10.1.1.5		10.1.1.5			0           No             1     Direct
+10.1.1.6		10.1.1.6			0           No             1     Direct
+10.1.1.7		10.1.1.7			0           No             1     Direct
+10.1.1.8		10.1.1.8			0           No             1     Direct
+10.1.1.9		10.1.1.9			0           No             1     Direct
+10.1.1.10		10.1.1.10			0           No             1     Direct
+10.1.1.11		10.1.1.11			0           No             1     Direct
+10.1.1.12		10.1.1.12			176         Yes            1     Direct
+10.1.1.14		10.1.1.14			0           No             1     Direct
+10.1.1.15		10.1.1.15			0           No             1     Direct
+10.1.1.16		10.1.1.16			0           No             1     Direct
+--------------------------------------------------------------------------------
+Summary: 15 total routes (15 direct, 0 multi-hop), 1 bidirectional, 1 with valid TQ
+
+Batman Routing Table at +10.0s:
+Destination    Next Hop          Metric(TQ)  Bidirectional  Hops  Type
+--------------------------------------------------------------------------------
+10.1.1.1		10.1.1.1			0           No             1     Direct
+10.1.1.2		10.1.1.2			0           No             1     Direct
+10.1.1.3		10.1.1.3			0           No             1     Direct
+10.1.1.4		10.1.1.4			0           No             1     Direct
+10.1.1.5		10.1.1.5			0           No             1     Direct
+10.1.1.6		10.1.1.6			0           No             1     Direct
+10.1.1.7		10.1.1.7			0           No             1     Direct
+10.1.1.8		10.1.1.8			0           No             1     Direct
+10.1.1.9		10.1.1.9			0           Yes            1     Direct
+10.1.1.10		10.1.1.10			0           No             1     Direct
+10.1.1.11		10.1.1.11			0           No             1     Direct
+10.1.1.12		10.1.1.12			0           No             1     Direct
+10.1.1.13		10.1.1.13			0           No             1     Direct
+10.1.1.15		10.1.1.15			127         Yes            1     Direct
+10.1.1.16		10.1.1.16			0           No             1     Direct
+--------------------------------------------------------------------------------
+Summary: 15 total routes (15 direct, 0 multi-hop), 2 bidirectional, 1 with valid TQ
+
+Batman Routing Table at +10.0s:
+Destination    Next Hop          Metric(TQ)  Bidirectional  Hops  Type
+--------------------------------------------------------------------------------
+10.1.1.1		10.1.1.1			0           No             1     Direct
+10.1.1.2		10.1.1.2			0           No             1     Direct
+10.1.1.3		10.1.1.3			0           No             1     Direct
+10.1.1.4		10.1.1.4			0           No             1     Direct
+10.1.1.5		10.1.1.5			0           No             1     Direct
+10.1.1.6		10.1.1.6			0           No             1     Direct
+10.1.1.7		10.1.1.7			0           No             1     Direct
+10.1.1.8		10.1.1.8			0           No             1     Direct
+10.1.1.9		10.1.1.9			0           No             1     Direct
+10.1.1.10		10.1.1.10			0           Yes            1     Direct
+10.1.1.11		10.1.1.11			0           No             1     Direct
+10.1.1.12		10.1.1.12			0           No             1     Direct
+10.1.1.13		10.1.1.13			0           No             1     Direct
+10.1.1.14		10.1.1.14			127         Yes            1     Direct
+10.1.1.16		10.1.1.16			0           No             1     Direct
+--------------------------------------------------------------------------------
+Summary: 15 total routes (15 direct, 0 multi-hop), 2 bidirectional, 1 with valid TQ
+
+Batman Routing Table at +10.0s:
+Destination    Next Hop          Metric(TQ)  Bidirectional  Hops  Type
+--------------------------------------------------------------------------------
+10.1.1.1		10.1.1.1			0           No             1     Direct
+10.1.1.2		10.1.1.2			0           No             1     Direct
+10.1.1.3		10.1.1.3			0           No             1     Direct
+10.1.1.4		10.1.1.4			0           No             1     Direct
+10.1.1.5		10.1.1.5			0           No             1     Direct
+10.1.1.6		10.1.1.6			0           No             1     Direct
+10.1.1.7		10.1.1.7			0           No             1     Direct
+10.1.1.8		10.1.1.8			0           No             1     Direct
+10.1.1.9		10.1.1.9			0           No             1     Direct
+10.1.1.10		10.1.1.10			0           No             1     Direct
+10.1.1.11		10.1.1.11			176         Yes            1     Direct
+10.1.1.12		10.1.1.12			0           No             1     Direct
+10.1.1.13		10.1.1.13			0           No             1     Direct
+10.1.1.14		10.1.1.14			0           No             1     Direct
+10.1.1.15		10.1.1.15			0           No             1     Direct
+--------------------------------------------------------------------------------
+Summary: 15 total routes (15 direct, 0 multi-hop), 1 bidirectional, 1 with valid TQ
+

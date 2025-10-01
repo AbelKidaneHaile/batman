@@ -1,0 +1,10 @@
+services:
+  ns3dce:
+    image: abelkidane/ns3-dce:latest
+    container_name: ns3dce-dev
+    working_dir: /home/ns3dce/dce-linux-dev/source/ns-3-dev
+    volumes:
+      - .:/home/ns3dce/dce-linux-dev/source/ns-3-dev/src/batman
+    stdin_open: true  
+    tty: true          
+    command: ["/bin/bash"]
