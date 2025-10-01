@@ -15,7 +15,7 @@ NS_LOG_COMPONENT_DEFINE("BatmanSimulation");
 
 int main(int argc, char *argv[])
 {
-  // Simulation parameters
+  // simulation parameters
   uint32_t nNodes = 10;
   double duration = 100.0;
   std::string phyMode("DsssRate1Mbps");
@@ -26,17 +26,17 @@ int main(int argc, char *argv[])
   cmd.AddValue("phyMode", "WiFi PHY mode", phyMode);
   cmd.Parse(argc, argv);
   
-  // Enable logging
+  // logging
   LogComponentEnable("BatmanRoutingProtocol", LOG_LEVEL_INFO);
   LogComponentEnable("BatmanSimulation", LOG_LEVEL_INFO);
   
   NS_LOG_INFO("Creating " << nNodes << " nodes");
   
-  // Create nodes
+  // nodes
   NodeContainer nodes;
   nodes.Create(nNodes);
   
-  // Configure WiFi
+  // configure WiFi
   WifiHelper wifi;
   wifi.SetStandard(WIFI_PHY_STANDARD_80211b);
   
@@ -51,7 +51,7 @@ int main(int argc, char *argv[])
   
   NetDeviceContainer devices = wifi.Install(wifiPhy, wifiMac, nodes);
   
-  // Configure mobility
+  // configure mobility
   MobilityHelper mobility;
   mobility.SetPositionAllocator("ns3::GridPositionAllocator",
                                "MinX", DoubleValue(0.0),
@@ -66,27 +66,24 @@ int main(int argc, char *argv[])
                            "Speed", StringValue("ns3::ConstantRandomVariable[Constant=10.0]"));
   mobility.Install(nodes);
   
-  // Install Internet stack with Batman routing
+  // install Internet stack with batman routing
   InternetStackHelper stack;
   BatmanHelper batman;
   stack.SetRoutingHelper(batman);
   stack.Install(nodes);
   
-  // Assign IP addresses
+  // assign IP addresses
   Ipv4AddressHelper address;
   address.SetBase("10.1.1.0", "255.255.255.0");
   Ipv4InterfaceContainer interfaces = address.Assign(devices);
-  
-  // Create applications
+ 
   uint16_t port = 9;
-  
-  // UDP Echo Server on last node
+
   UdpEchoServerHelper echoServer(port);
   ApplicationContainer serverApps = echoServer.Install(nodes.Get(nNodes - 1));
   serverApps.Start(Seconds(1.0));
   serverApps.Stop(Seconds(duration));
-  
-  // UDP Echo Client on first node
+
   UdpEchoClientHelper echoClient(interfaces.GetAddress(nNodes - 1), port);
   echoClient.SetAttribute("MaxPackets", UintegerValue(100));
   echoClient.SetAttribute("Interval", TimeValue(Seconds(1.0)));
@@ -96,17 +93,15 @@ int main(int argc, char *argv[])
   clientApps.Start(Seconds(2.0));
   clientApps.Stop(Seconds(duration));
   
-  // Enable tracing
+  // tracing
   AsciiTraceHelper ascii;
   wifiPhy.EnableAsciiAll(ascii.CreateFileStream("/home/ns3dce/dce-linux-dev/source/ns-3-dev/src/batman/trace/batman-simulation.tr"));
   wifiPhy.EnablePcapAll("/home/ns3dce/dce-linux-dev/source/ns-3-dev/src/batman/pcap/batman-simulation", false);
   
-  // Print routing tables
   Ptr<OutputStreamWrapper> routingStream = Create<OutputStreamWrapper>("/home/ns3dce/dce-linux-dev/source/ns-3-dev/src/batman/routing/batman-routing.txt", std::ios::out);
   batman.PrintRoutingTableAllAt(Seconds(10), routingStream);
   
   AnimationInterface anim("/home/ns3dce/dce-linux-dev/source/ns-3-dev/src/batman/batman-animation.xml"); //abel netanim 
-  // Optional: set node descriptions (IP, index, etc.)
   for (uint32_t i = 0; i < nodes.GetN(); ++i)
   {
       anim.UpdateNodeDescription(nodes.Get(i), "Node-" + std::to_string(i)); // label

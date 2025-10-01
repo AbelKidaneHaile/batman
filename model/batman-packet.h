@@ -48,14 +48,12 @@ public:
    */
   static TypeId GetTypeId();
 
-  // Header serialization/deserialization
   virtual TypeId GetInstanceTypeId() const;
   virtual void Print(std::ostream &os) const;
   virtual uint32_t GetSerializedSize() const;
   virtual void Serialize(Buffer::Iterator start) const;
   virtual uint32_t Deserialize(Buffer::Iterator start);
 
-  // Getters and setters
   void SetOriginator(Ipv4Address originator) { m_originator = originator; }
   Ipv4Address GetOriginator() const { return m_originator; }
 
@@ -74,7 +72,7 @@ public:
   void SetVersion(uint8_t version) { m_version = version; }
   uint8_t GetVersion() const { return m_version; }
 
-  // Bidirectional neighbors management
+
   void AddBidirectionalNeighbor(Ipv4Address neighbor);
   void RemoveBidirectionalNeighbor(Ipv4Address neighbor);
   void SetBidirectionalNeighbors(const std::set<Ipv4Address>& neighbors);
@@ -82,16 +80,18 @@ public:
   bool HasBidirectionalNeighbor(Ipv4Address neighbor) const;
   uint8_t GetNumBidirectionalNeighbors() const;
 
-private:
-  uint8_t m_version;                              ///< Protocol version (default 1)
-  uint8_t m_ttl;                                  ///< Time to live
-  uint8_t m_tq;                                   ///< Transmission quality
-  uint16_t m_seqNum;                              ///< Sequence number
-  Ipv4Address m_originator;                       ///< Originator address
-  Ipv4Address m_prevSender;                       ///< Previous sender address
-  std::set<Ipv4Address> m_bidirectionalNeighbors; ///< List of bidirectional neighbors
 
-  static const uint8_t BATMAN_VERSION = 1;       ///< Protocol version
+
+private:
+  uint8_t m_version;           // protocol version (default 1)
+  uint8_t m_ttl;                    // time to live / ttl
+  uint8_t m_tq;                               // transmission quality
+  uint16_t m_seqNum;         // sequence number
+  Ipv4Address m_originator;    //originator address
+  Ipv4Address m_prevSender;        // previous sender address
+  std::set<Ipv4Address> m_bidirectionalNeighbors; // list of bidirectional neighbors
+
+  static const uint8_t BATMAN_VERSION = 1;       // protocol version
 };
 
 } // namespace ns3

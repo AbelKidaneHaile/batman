@@ -55,8 +55,8 @@ BatmanPacket::Print(std::ostream &os) const
 uint32_t
 BatmanPacket::GetSerializedSize() const
 {
-  // Fixed header: 1+1+1+1+2+2+4+4+1+3 = 20 bytes
-  // Variable part: 4 bytes per bidirectional neighbor
+  // fixed header: 1+1+1+1+2+2+4+4+1+3 = 20 bytes
+  // variable part: 4 bytes per bidirectional neighbor
   return 20 + (m_bidirectionalNeighbors.size() * 4);
 }
 
@@ -67,25 +67,25 @@ BatmanPacket::Serialize(Buffer::Iterator start) const
   
   Buffer::Iterator i = start;
   
-  // Write fixed header
+  // write fixed header
   i.WriteU8(m_version);     // 1 byte
   i.WriteU8(m_ttl);         // 1 byte
   i.WriteU8(m_tq);          // 1 byte
-  i.WriteU8(0);             // 1 byte - Reserved
+  i.WriteU8(0);             // 1 byte - reserved
   
   i.WriteHtonU16(m_seqNum); // 2 bytes
-  i.WriteHtonU16(0);        // 2 bytes - Reserved/padding
+  i.WriteHtonU16(0);        // 2 bytes - reserved/padding
   
   WriteTo(i, m_originator); // 4 bytes
   WriteTo(i, m_prevSender); // 4 bytes
   
   // Write number of bidirectional neighbors
   i.WriteU8(static_cast<uint8_t>(std::min(m_bidirectionalNeighbors.size(), static_cast<size_t>(255))));
-  i.WriteU8(0);             // 1 byte - Reserved
-  i.WriteU8(0);             // 1 byte - Reserved  
-  i.WriteU8(0);             // 1 byte - Reserved
+  i.WriteU8(0);             // 1 byte - reserved
+  i.WriteU8(0);             // 1 byte - reserved  
+  i.WriteU8(0);             // 1 byte - reserved
   
-  // Write bidirectional neighbors (limit to 255 to prevent overflow)
+  // write bidirectional neighbors (limit to 255 to prevent overflow)
   size_t count = 0;
   for (const auto& neighbor : m_bidirectionalNeighbors) {
     if (count >= 255) break;
@@ -100,8 +100,7 @@ BatmanPacket::Deserialize(Buffer::Iterator start)
   NS_LOG_FUNCTION(this << &start);
   
   Buffer::Iterator i = start;
-  
-  // Read fixed header
+
   m_version = i.ReadU8();     // 1 byte
   m_ttl = i.ReadU8();         // 1 byte
   m_tq = i.ReadU8();          // 1 byte
@@ -112,14 +111,12 @@ BatmanPacket::Deserialize(Buffer::Iterator start)
   
   ReadFrom(i, m_originator);  // 4 bytes
   ReadFrom(i, m_prevSender);  // 4 bytes
-  
-  // Read number of bidirectional neighbors
+
   uint8_t numNeighbors = i.ReadU8(); // 1 byte
   i.ReadU8();                        // 1 byte - Skip reserved
   i.ReadU8();                        // 1 byte - Skip reserved
   i.ReadU8();                        // 1 byte - Skip reserved
-  
-  // Read bidirectional neighbors
+
   m_bidirectionalNeighbors.clear();
   for (uint8_t j = 0; j < numNeighbors; j++) {
     Ipv4Address neighbor;
@@ -127,7 +124,7 @@ BatmanPacket::Deserialize(Buffer::Iterator start)
     m_bidirectionalNeighbors.insert(neighbor);
   }
   
-  // Return actual bytes read
+
   return 20 + (numNeighbors * 4);
 }
 
@@ -167,4 +164,4 @@ BatmanPacket::GetNumBidirectionalNeighbors() const
   return static_cast<uint8_t>(m_bidirectionalNeighbors.size());
 }
 
-} // namespace ns3
+} 
