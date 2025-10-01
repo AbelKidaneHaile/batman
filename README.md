@@ -4,13 +4,12 @@
      <a  href="https://hub.docker.com/r/abelkidane/ns3-dce" ><img alt="Static Badge" src="https://img.shields.io/badge/docker-abelkidane%2Freports-blue?logo=docker" target="_blank">    
 </p>
 
-Simple simulation code for simulating the batman protocol in ns-3.
-(N.B. This repo contains a from-scratch Batman protocol implementation and is not recommended for use. Please use the official release instead.)
+Simple simulation code for simulating the Batman routing protocol in ns-3.
+(N.B. This repo contains a "from-scratch" Batman protocol implementation, and is not recommended for any use. Please use the official release instead.)
 
 ## Prerequisite 
-Install Docker in your PC by following the installation instructions from [Docker](https://docs.docker.com/engine/install/)
-For Windows, install the Docker Desktop Application. 
-For Ubuntu, install it using the following commands.
+Install Docker in your PC by following the installation instructions from [Docker](https://docs.docker.com/engine/install/). For Windows, install the Docker Desktop Application. For Ubuntu, install it using the following commands.
+
 ```bash
 sudo apt update
 sudo apt install docker.io
@@ -18,7 +17,8 @@ sudo apt install docker.io
 # to verify installation just type
 docker
 ```
-To avoid usign sudo everytime we use docker, create a group and add the user to it
+To avoid usign sudo everytime you use docker, create a group and add the user to it:-
+
 ```bash
 sudo groupadd docker
 sudo usermod -aG docker $USER
@@ -34,6 +34,7 @@ git clone https://github.com/AbelKidaneHaile/batman.git
 docker pull abelkidane/ns3-dce 
 cd batman
 ```
+
 Then, start the container by using docker compose.
 
 ```bash 
@@ -42,7 +43,8 @@ docker compose run ns3dce
 OR alternatively (this removes warnings that docker compose has leftover from older runs)
 docker compose run --rm --remove-orphans ns3dce
 ```
-Now, we are ready to run ns3 terminal commands using waf. Make sure to configure at least once. Building might take a bit of time. 
+
+Now, we are ready to run ns3 terminal commands using waf. Always make sure to configure at least once. Building might take a bit of time. 
 
 ```bash 
 ./waf configure --enable-examples --enable-tests
@@ -53,3 +55,5 @@ Finally, we can run the simulation
 ```bash 
 ./waf --run "batman-simulation --nNodes=5 --duration=12"
 ```
+
+After completing the simulation, an xml file will be generated (batman-animation.xml). This file can be used in netanim to show the transfer of the packets across nodes. Open netanim and select the xml file to view the packet traffic in the simulation. 
